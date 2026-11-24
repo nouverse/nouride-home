@@ -70,6 +70,7 @@ class StatusActivity : Activity() {
     ui = Ui(this)
     ui.lightSystemBars(window)
     setContentView(views())
+    FocusRing.follow(this)
     show(savedInstanceState?.getString(STATE_TAB)?.let { name -> Tab.values().firstOrNull { it.name == name } } ?: Tab.HOME)
     if (savedInstanceState == null) handleExtras(intent)
   }

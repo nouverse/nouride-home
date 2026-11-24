@@ -126,6 +126,7 @@ class DashboardActivity : Activity() {
       addView(opening)
       addView(unreachable)
     })
+    FocusRing.follow(this)
     ui.lightSystemBars(window)
     if (savedInstanceState != null) {
       opening.visibility = View.GONE
