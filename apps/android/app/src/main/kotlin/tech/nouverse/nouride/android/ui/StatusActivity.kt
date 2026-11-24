@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import tech.nouverse.nouride.android.R
+import tech.nouverse.nouride.android.power.KeepRunning
 import tech.nouverse.nouride.android.power.PowerSettings
 import tech.nouverse.nouride.android.Layout
 import tech.nouverse.nouride.android.server.DeviceSupport
@@ -124,7 +125,7 @@ class StatusActivity : Activity() {
     if (!runsHere()) return ServerState.set(ServerState.Phase.UNSUPPORTED, progress = null)
     update.starting()
     ServerService.start(this)
-    if (!PowerSettings.isExempt(this)) startActivity(PowerSettings.exemptionRequest(this))
+    if (PowerSettings.keepRunning(this) == KeepRunning.ASK) startActivity(PowerSettings.exemptionRequest(this))
   }
 
   private fun runsHere(): Boolean = DeviceSupport.runs(Layout(this).prootPaths().proot)
@@ -176,7 +177,8 @@ class StatusActivity : Activity() {
     val address = place.address()
     val look = if (where == Where.REMOTE) StatusLook.remote(reply)
     else StatusLook.of(ServerState.phase, answering = ServerState.health?.ok == true)
-    val mayStop = where == Where.PHONE && !PowerSettings.isExempt(this)
+    val keepRunning = PowerSettings.keepRunning(this)
+    val mayStop = where == Where.PHONE && keepRunning == KeepRunning.ASK
     val barShown = Tabs.barShown(look, firstStart = ServerState.progress != null)
     if (!barShown && tab != Tab.HOME) return show(Tab.HOME)
     bar.view.visibility = if (barShown) View.VISIBLE else View.GONE
@@ -187,7 +189,7 @@ class StatusActivity : Activity() {
     bar.attention(Tab.MORE, UpdateNotices.moreDot(mayStop, app = Updates.waiting(this) != null, nouride = nourideReady != null))
     home.render(look, mayStop, where, address, runsHere())
     if (tab == Tab.CONNECT) connect.render(look, where, address)
-    more.render(mayStop, where != Where.REMOTE && StatusLook.canTurnOff(ServerState.phase), where, address)
+    more.render(keepRunning, where != Where.REMOTE && StatusLook.canTurnOff(ServerState.phase), where, address)
   }
 
   private fun onPrimary() {

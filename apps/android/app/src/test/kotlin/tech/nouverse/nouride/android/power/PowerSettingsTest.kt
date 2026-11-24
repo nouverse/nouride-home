@@ -24,4 +24,13 @@ class PowerSettingsTest {
     assertEquals("miui.intent.action.OP_AUTO_START", PowerSettings.autostartScreen(opens = true))
     assertEquals("android.settings.APPLICATION_DETAILS_SETTINGS", PowerSettings.autostartScreen(opens = false))
   }
+
+  @Test
+  fun `the exemption is asked for only where a person can give it`() {
+    assertEquals(KeepRunning.ASK, PowerSettings.keepRunning(exempt = false, television = false))
+    assertEquals(KeepRunning.ALLOWED, PowerSettings.keepRunning(exempt = true, television = false))
+    assertEquals(KeepRunning.ALLOWED, PowerSettings.keepRunning(exempt = true, television = true))
+    // Android TV's settings answer the request with an empty screen: an Allow there would do nothing, for ever.
+    assertEquals(KeepRunning.NOTHING_TO_ASK, PowerSettings.keepRunning(exempt = false, television = true))
+  }
 }

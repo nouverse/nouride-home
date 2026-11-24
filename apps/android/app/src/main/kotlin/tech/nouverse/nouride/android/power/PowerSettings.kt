@@ -3,13 +3,34 @@ package tech.nouverse.nouride.android.power
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 
+/** What More's "Keep Nouride running" offers: the exemption to ask for, a check that it is given, or nothing. */
+enum class KeepRunning { ASK, ALLOWED, NOTHING_TO_ASK }
+
 /** Android's own battery-optimization exemption; vendor battery savers have their own switches. */
 object PowerSettings {
+  /**
+   * Asked for only where a person can give it. Android TV's settings answer the request with an empty screen
+   * (`com.android.tv.settings/.EmptyStubActivity` on a Google TV Streamer, Android TV 14), so on a TV the button would do
+   * nothing and Home's reminder could never go away: there is nothing to ask there.
+   */
+  fun keepRunning(exempt: Boolean, television: Boolean): KeepRunning = when {
+    exempt -> KeepRunning.ALLOWED
+    television -> KeepRunning.NOTHING_TO_ASK
+    else -> KeepRunning.ASK
+  }
+
+  fun keepRunning(context: Context): KeepRunning = keepRunning(isExempt(context), isTelevision(context))
+
+  /** UI mode television: Android TV and Google TV, as `res/values-television` is chosen. */
+  fun isTelevision(context: Context): Boolean =
+    context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
+
   fun isExempt(context: Context): Boolean =
     Build.VERSION.SDK_INT < 23 ||
       (context.getSystemService(Context.POWER_SERVICE) as PowerManager).isIgnoringBatteryOptimizations(context.packageName)
