@@ -1,0 +1,22 @@
+Redmi Note 12, portrait (1080x2400, 440 dpi, 393 dp wide), Nouride Home Dev, 2026-11-25 01:51-01:56 Asia/Jakarta.
+main = origin/main 8ae0ef4 built from a clean worktree; branch = feat/wide-layout. Same state in both: Nouride running (Home, Connect), Nouride off (More).
+Status bar (top 110 px) left out: its clock and icons are not the app's.
+
+home (running): (1080, 2400) (1080, 2400) None
+connect (running): (1080, 2400) (1080, 2400) None
+more (off): (1080, 2400) (1080, 2400) None
+
+Again with the final build (85d8c47 plus Columns.split, the branch's head), 2026-11-25 02:06-02:11. round.sh installs,
+starts Nouride and shoots the tabs; versions-shot.sh stops Nouride and opens More's two rows by touch.
+
+connect (running): (1080, 2400) (1080, 2400) (327, 2259, 749, 2270)
+more (running): (1080, 2400) (1080, 2400) (327, 2259, 749, 2270)
+home (running): (1080, 2400) (1080, 2400) (121, 1691, 959, 2270)
+Versions and updates screen (off): (1080, 2400) (1080, 2400) (331, 2259, 749, 2274)
+
+The box at x 327-749, y 2369-2384 (y 2259-2274 below the status bar) is the system's gesture handle under the bar,
+which Android tints by what is behind it: not the app's pixels. Home's larger box is a focus ring on Open Nouride in
+main's shot: round.sh's Back key (to leave HyperOS's battery page) took that run out of touch mode. The first build
+of the branch was identical to main on Home with no ring (above).
+Technical Logs: its back bar and its Copy and Share are pixel-identical; the cards' contents (the state, the log) are
+Nouride's of the moment and differ, so only its frame was compared.

@@ -1,0 +1,24 @@
+Redmi Note 12 sideways with wm density 300 (1280 dp wide: the sidebar and two columns), Nouride running, Home open.
+focus.sh presses each key with `input keyevent` (which leaves touch mode, as a remote does) and prints the view holding
+focus from a uiautomator dump: its class, its words, its bounds in px.
+
+$ focus.sh <serial> DPAD_DOWN DPAD_DOWN DPAD_RIGHT DPAD_RIGHT DPAD_DOWN DPAD_LEFT DPAD_DOWN DPAD_DOWN DPAD_DOWN DPAD_DOWN DPAD_DOWN DPAD_UP DPAD_CENTER DPAD_RIGHT BACK
+DPAD_DOWN -> LinearLayout 'Home' [112,216][503,306]
+DPAD_DOWN -> LinearLayout 'Connect' [112,309][503,399]
+DPAD_RIGHT -> Button 'Open Nouride' [658,911][1455,1016]
+DPAD_RIGHT -> TextView 'Nouride may stop when the screen is off.' [1537,589][2309,723]
+DPAD_DOWN -> Button 'Open Nouride' [658,911][1455,1016]
+DPAD_LEFT -> LinearLayout 'Home' [112,216][503,306]
+DPAD_DOWN -> LinearLayout 'Connect' [112,309][503,399]
+DPAD_DOWN -> LinearLayout 'Versions and updates' [112,402][503,492]
+DPAD_DOWN -> LinearLayout 'Settings' [112,495][503,585]
+DPAD_DOWN -> LinearLayout 'Technical Logs' [112,942][503,1032]
+DPAD_DOWN -> LinearLayout 'Technical Logs' [112,942][503,1032]
+DPAD_UP -> LinearLayout 'Settings' [112,495][503,585]
+DPAD_CENTER -> LinearLayout 'Settings' [112,495][503,585]
+DPAD_RIGHT -> Button 'Allow' [875,733][2047,838]
+BACK -> LinearLayout 'Home' [112,216][503,306]
+
+Read: the first key lands on the open section (Home). Left from "Open Nouride", which lies level with Settings, goes to
+Home, the open section, not the nearest item. Down past Technical Logs stays there. Center opens Settings and keeps
+focus on its item; Right enters its page. Back opens Home and focus follows to its item.
