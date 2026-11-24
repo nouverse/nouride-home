@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import tech.nouverse.nouride.android.R
@@ -36,8 +37,13 @@ import kotlin.concurrent.thread
  * computer at an address the person gives. Nothing of the phone's own server starts until it is answered, and answered
  * "another computer" this screen never starts one at all. More changes the answer either way.
  *
- * The extras `start`, `stop` and `dashboard` (booleans) do what the buttons do, and `tab` (home, connect, more) opens a
- * tab, for `adb shell am start --ez <name> true` and `--es tab connect`.
+ * On a wide screen (720 dp and up: a tablet, a TV, a phone turned sideways) the bar gives way to the desktop's sidebar,
+ * and More's cards become its sections: Versions and updates, Settings and Technical Logs (`Sections`,
+ * `spec/layout.md`). The shape is read from the window's width as the screen is made; a change of size (turning the
+ * phone, splitting the screen) makes it again, and the open section carries over.
+ *
+ * The extras `start`, `stop` and `dashboard` (booleans) do what the buttons do, and `tab` (home, connect, more, or a
+ * section: versions, settings, logs) opens it, for `adb shell am start --ez <name> true` and `--es tab connect`.
  */
 class StatusActivity : Activity() {
   private lateinit var ui: Ui
@@ -46,9 +52,17 @@ class StatusActivity : Activity() {
   private lateinit var home: HomeTab
   private lateinit var connect: ConnectTab
   private lateinit var more: MoreTab
-  private lateinit var bar: BottomBar
   private lateinit var place: Place
-  private var tab = Tab.HOME
+  private lateinit var shape: Shape
+
+  /** The phone's bar, or on a wide screen the sidebar and the sections More holds on a phone. */
+  private var bar: BottomBar? = null
+  private var sidebar: Sidebar? = null
+  private var versions: VersionsPage? = null
+  private var logs: LogsPage? = null
+  private val pages = LinkedHashMap<Section, View>()
+  private var section = Section.HOME
+  private var resumed = false
   private val handler = Handler(Looper.getMainLooper())
   private val listener: () -> Unit = {
     render()
@@ -69,10 +83,13 @@ class StatusActivity : Activity() {
     super.onCreate(savedInstanceState)
     place = Place(this)
     ui = Ui(this)
+    shape = Sections.shape(resources.configuration.screenWidthDp)
     ui.lightSystemBars(window)
     setContentView(views())
     FocusRing.follow(this)
-    show(savedInstanceState?.getString(STATE_TAB)?.let { name -> Tab.values().firstOrNull { it.name == name } } ?: Tab.HOME)
+    show(savedInstanceState?.getString(STATE_SECTION)?.let(Sections::named) ?: Section.HOME)
+    // A remote starts at the open section, as the desktop's sidebar does (only out of touch mode: a phone never shows it).
+    sidebar?.openItem()?.requestFocus()
     if (savedInstanceState == null) handleExtras(intent)
   }
 
@@ -83,18 +100,20 @@ class StatusActivity : Activity() {
 
   override fun onSaveInstanceState(outState: Bundle) {
     super.onSaveInstanceState(outState)
-    outState.putString(STATE_TAB, tab.name)
+    outState.putString(STATE_SECTION, section.name)
   }
 
   private fun handleExtras(intent: Intent) {
     if (intent.getBooleanExtra(EXTRA_START, false)) startServer()
     if (intent.getBooleanExtra(EXTRA_STOP, false)) ServerService.stop(this)
     if (intent.getBooleanExtra(EXTRA_DASHBOARD, false)) openDashboard()
-    intent.getStringExtra(EXTRA_TAB)?.let { name -> Tab.values().firstOrNull { it.name.equals(name, ignoreCase = true) }?.let(::show) }
+    intent.getStringExtra(EXTRA_TAB)?.let(Sections::named)?.let(::show)
   }
 
   override fun onResume() {
     super.onResume()
+    resumed = true
+    pageShown()
     ServerState.listen(listener)
     handler.post(refresh)
     update.resume()
@@ -106,14 +125,21 @@ class StatusActivity : Activity() {
   }
 
   override fun onPause() {
+    resumed = false
+    versions?.pause()
     ServerState.unlisten(listener)
     handler.removeCallbacks(refresh)
     super.onPause()
   }
 
+  override fun onDestroy() {
+    versions?.close()
+    super.onDestroy()
+  }
+
   @Deprecated("Activity.onBackPressed")
   override fun onBackPressed() {
-    val to = Tabs.back(tab)
+    val to = if (shape.sidebar) Sections.back(section) else Tabs.back(Sections.tab(section))?.let(Sections::of)
     @Suppress("DEPRECATION")
     if (to == null) super.onBackPressed() else show(to)
   }
@@ -135,41 +161,85 @@ class StatusActivity : Activity() {
   private fun views(): View {
     // More's Versions line says what the check found, not what was known before it.
     update = UpdateCard(this, ui, onChecked = { more.resume() })
-    nourideUpdate = NourideUpdateCard(this, ui) {
-      startActivity(Intent(this, VersionsActivity::class.java).putExtra(VersionsActivity.EXTRA_UPDATE_NOURIDE, true))
-    }
+    nourideUpdate = NourideUpdateCard(this, ui, ::updateNouride)
     home = HomeTab(
-      this, ui, update, nourideUpdate,
+      this, ui, shape, update, nourideUpdate,
       onPrimary = ::onPrimary,
-      onKeepRunning = { show(Tab.MORE) },
+      onKeepRunning = { show(Section.SETTINGS) },
       onRunHere = ::runOnThisPhone,
       onConnectRemote = ::askForAddress,
     )
-    connect = ConnectTab(this, ui, onGoHome = { show(Tab.HOME) })
-    more = MoreTab(this, ui, onTurnOff = ::confirmTurnOff, onChoose = ::choose, onChangeAddress = ::askForAddress)
-    bar = BottomBar(this, ui, onSelect = ::show)
-    val content = FrameLayout(this).apply {
-      addView(home.view)
-      addView(connect.view)
-      addView(more.view)
+    connect = ConnectTab(this, ui, shape, onGoHome = { show(Section.HOME) })
+    more = MoreTab(this, ui, shape, onTurnOff = ::confirmTurnOff, onChoose = ::choose, onChangeAddress = ::askForAddress)
+    pages[Section.HOME] = home.view
+    pages[Section.CONNECT] = connect.view
+    pages[Section.SETTINGS] = more.view
+    val content = FrameLayout(this)
+    if (!shape.sidebar) {
+      val bar = BottomBar(this, ui, onSelect = { show(Sections.of(it)) })
+      this.bar = bar
+      for (page in pages.values) content.addView(page)
+      return LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        background = ui.page()
+        addView(content, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+        addView(bar.view, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+          setMargins(ui.dp(12), ui.dp(4), ui.dp(12), ui.dp(12))
+        })
+      }
     }
-    return LinearLayout(this).apply {
+    val versions = VersionsPage(this, ui, twoColumns = shape == Shape.TWO_COLUMNS).also { this.versions = it }
+    val logs = LogsPage(this, ui, wide = true).also { this.logs = it }
+    pages[Section.VERSIONS] = ui.scroll(ui.column(shape).apply {
+      addView(ui.pageTitle(R.string.versions_title))
+      addView(versions.cards, ui.fullWidth(16))
+    }, shape)
+    // Technical Logs takes the whole page: its log scrolls in its own box.
+    pages[Section.LOGS] = LinearLayout(this).apply {
       orientation = LinearLayout.VERTICAL
-      background = ui.page()
-      addView(content, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
-      addView(bar.view, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-        setMargins(ui.dp(12), ui.dp(4), ui.dp(12), ui.dp(12))
-      })
+      setPadding(ui.dp(12), ui.dp(24), ui.dp(12), ui.dp(12))
+      addView(ui.pageTitle(R.string.support_title).apply { setPadding(ui.dp(16), 0, ui.dp(16), ui.dp(16)) })
+      addView(logs.view, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
     }
+    for (section in Section.values()) content.addView(pages.getValue(section))
+    val sidebar = Sidebar(this, ui, onSelect = ::show).also { this.sidebar = it }
+    val line = View(this).apply { setBackgroundColor(ui.color(R.color.line)) }
+    return SidebarLayout(this, sidebar, line, content, ui.dp(SIDEBAR_DP)).apply { background = ui.page() }
   }
 
-  private fun show(next: Tab) {
-    tab = next
-    home.view.visibility = if (next == Tab.HOME) View.VISIBLE else View.GONE
-    connect.view.visibility = if (next == Tab.CONNECT) View.VISIBLE else View.GONE
-    more.view.visibility = if (next == Tab.MORE) View.VISIBLE else View.GONE
-    bar.select(next)
+  /** Home's card for a new Nouride: Versions and updates, where its update starts and is followed. */
+  private fun updateNouride() {
+    val versions = versions ?: return startActivity(
+      Intent(this, VersionsActivity::class.java).putExtra(VersionsActivity.EXTRA_UPDATE_NOURIDE, true),
+    )
+    versions.updateNourideWhenFound()
+    show(Section.VERSIONS)
+  }
+
+  /** On a phone, a section of More shows More; Versions and Technical Logs open from its rows, as screens of their own. */
+  private fun show(next: Section) {
+    val before = section
+    section = if (shape.sidebar) next else Sections.of(Sections.tab(next))
+    for ((each, page) in pages) page.visibility = if (each == section) View.VISIBLE else View.GONE
+    bar?.select(Sections.tab(section))
+    sidebar?.select(section)
+    if (before != section) pageShown(left = before)
     render()
+    // A page's button that opened another section (Go to Home, the battery line) is gone: the remote goes on from the
+    // sidebar, at the section now open.
+    val focused = currentFocus
+    if (focused == null || !focused.isShown) sidebar?.openItem()?.requestFocus()
+  }
+
+  /** The Versions and Technical Logs pages read what they show as they come into view, and stop when they leave it. */
+  private fun pageShown(left: Section? = null) {
+    if (left == Section.VERSIONS) versions?.pause()
+    if (!resumed) return
+    when (section) {
+      Section.VERSIONS -> versions?.resume()
+      Section.LOGS -> logs?.load()
+      else -> Unit
+    }
   }
 
   private fun render() {
@@ -180,15 +250,27 @@ class StatusActivity : Activity() {
     val keepRunning = PowerSettings.keepRunning(this)
     val mayStop = where == Where.PHONE && keepRunning == KeepRunning.ASK
     val barShown = Tabs.barShown(look, firstStart = ServerState.progress != null)
-    if (!barShown && tab != Tab.HOME) return show(Tab.HOME)
-    bar.view.visibility = if (barShown) View.VISIBLE else View.GONE
+    val sidebarShown = Sections.sidebarShown(placeChosen = where != null, barShown = barShown)
+    if (!barShown && section != Section.HOME) return show(Section.HOME)
+    if (shape.sidebar && !sidebarShown && section != Section.HOME) return show(Section.HOME)
+    bar?.view?.visibility = if (barShown) View.VISIBLE else View.GONE
+    sidebar?.let { sidebar ->
+      val was = sidebar.view.visibility
+      sidebar.view.visibility = if (sidebarShown) View.VISIBLE else View.GONE
+      (sidebar.view.parent as ViewGroup).getChildAt(1).visibility = sidebar.view.visibility
+      // The sidebar has just come (the first question answered, the first setup over): a remote starts on it.
+      if (was != View.VISIBLE && sidebarShown) handler.post { if (currentFocus?.isShown != true) sidebar.openItem().requestFocus() }
+    }
+    home.alone(!sidebarShown)
     // Nouride's own update, once it answers and the first start is over: the card's Update needs it running.
     val nourideReady = NourideNotice.waiting(this)
       ?.takeIf { where == Where.PHONE && ServerState.health?.ok == true && ServerState.progress == null }
     nourideUpdate.render(nourideReady)
-    bar.attention(Tab.MORE, UpdateNotices.moreDot(mayStop, app = Updates.waiting(this) != null, nouride = nourideReady != null))
+    val appWaits = Updates.waiting(this) != null
+    bar?.attention(Tab.MORE, UpdateNotices.moreDot(mayStop, app = appWaits, nouride = nourideReady != null))
+    for (each in Section.values()) sidebar?.attention(each, Sections.dot(each, mayStop, app = appWaits, nouride = nourideReady != null))
     home.render(look, mayStop, where, address, runsHere())
-    if (tab == Tab.CONNECT) connect.render(look, where, address)
+    if (section == Section.CONNECT) connect.render(look, where, address)
     more.render(keepRunning, where != Where.REMOTE && StatusLook.canTurnOff(ServerState.phase), where, address)
   }
 
@@ -212,7 +294,7 @@ class StatusActivity : Activity() {
   private fun runOnThisPhone() {
     place.onThisPhone()
     reply = null
-    show(Tab.HOME)
+    show(Section.HOME)
     if (ServerState.phase == ServerState.Phase.STOPPED || ServerState.phase == ServerState.Phase.FAILED) startServer()
   }
 
@@ -238,7 +320,7 @@ class StatusActivity : Activity() {
     if (requestCode != REQUEST_ADDRESS || resultCode != RESULT_OK || base == null) return
     place.onMachine(base)
     if (ServerState.phase != ServerState.Phase.STOPPED) ServerService.stop(this)
-    show(Tab.HOME)
+    show(Section.HOME)
     checkRemote(again = true)
   }
 
@@ -299,7 +381,10 @@ class StatusActivity : Activity() {
     const val EXTRA_STOP = "stop"
     const val EXTRA_DASHBOARD = "dashboard"
     const val EXTRA_TAB = "tab"
-    private const val STATE_TAB = "tab"
+    private const val STATE_SECTION = "section"
+
+    /** The sidebar's width with its labels, the desktop's 228 px. */
+    private const val SIDEBAR_DP = 228
     private const val REQUEST_ADDRESS = 1
   }
 }

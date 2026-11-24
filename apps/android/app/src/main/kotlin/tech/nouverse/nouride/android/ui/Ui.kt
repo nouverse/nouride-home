@@ -15,6 +15,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import tech.nouverse.nouride.android.R
 import tech.nouverse.nouride.android.server.Step
@@ -165,6 +166,32 @@ internal class Ui(private val context: Context) {
   }
 
   fun gap(heightDp: Int): View = View(context).apply { minimumHeight = dp(heightDp) }
+
+  /** A page's name on a wide screen, as the desktop's pages open: Fredoka, larger; the cat is in the sidebar. */
+  fun pageTitle(titleId: Int): TextView = text(26f, R.color.ink, bold = true).apply { setText(titleId) }
+
+  /** The top of a tab on a phone ([header]), or of a section on a wide screen ([pageTitle]). */
+  fun top(shape: Shape, titleId: Int): View = if (shape.sidebar) pageTitle(titleId) else header(titleId)
+
+  /** The column a tab or a section is built in, with its edges: a phone's, or a wide screen's roomier ones. */
+  fun column(shape: Shape): LinearLayout = LinearLayout(context).apply {
+    orientation = LinearLayout.VERTICAL
+    if (shape.sidebar) setPadding(dp(28), dp(24), dp(28), dp(28)) else setPadding(dp(20), dp(16), dp(20), dp(24))
+  }
+
+  /**
+   * A tab's page that scrolls: on a phone the column itself, as it always was; on a wide screen kept to a readable
+   * width ([readableDp], `spec/layout.md`), centred, in a page that fills the screen so a lone card can stand in its
+   * middle (`Readable.centred`).
+   */
+  fun scroll(column: View, shape: Shape, readableDp: Int = Sections.READABLE_DP): ScrollView = ScrollView(context).apply {
+    if (!shape.sidebar) {
+      addView(column)
+      return@apply
+    }
+    isFillViewport = true
+    addView(Readable(context, dp(readableDp), column))
+  }
 
   companion object {
     /** The design rules' card corner. */

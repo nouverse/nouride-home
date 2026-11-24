@@ -8,37 +8,15 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import tech.nouverse.nouride.android.Layout
 import tech.nouverse.nouride.android.R
-import tech.nouverse.nouride.android.server.Place
-import tech.nouverse.nouride.android.server.ServerState
-import tech.nouverse.nouride.android.server.Where
-import tech.nouverse.nouride.android.update.Release
-import tech.nouverse.nouride.android.update.Updates
-import java.io.IOException
-import kotlin.concurrent.thread
 
 /**
- * "Versions and updates", opened from More: which version of Nouride Home this is and which of Nouride runs, each with
- * Check for updates and, when there is a newer one, its update in one press. The app's update is the one Home offers
- * (`AppUpdater`); Nouride's is the one its dashboard offers (`NourideCard`).
+ * "Versions and updates" on a phone, opened from More: its back and its name on top, then the two cards
+ * (`VersionsPage`), which a wide screen shows as a section of its sidebar instead.
  */
 class VersionsActivity : Activity() {
   private lateinit var ui: Ui
-  private lateinit var layout: Layout
-  private lateinit var app: VersionCard
-  private lateinit var nouride: NourideCard
-  private lateinit var updater: AppUpdater
-
-  /** Nouride's version and its update are the phone's own server's: no card while it lives on another machine. */
-  private var remote = false
-
-  /** What the last press of Check for updates found; the release itself is in `Updates`. */
-  private var appStep = AppStep.UP_TO_DATE
-  private val listener: () -> Unit = {
-    nouride.serverChanged()
-    showApp()
-  }
+  private lateinit var page: VersionsPage
 
   /** In the appearance chosen on the More tab (`Appearances`). */
   override fun attachBaseContext(base: Context) = super.attachBaseContext(Appearances.wrap(base))
@@ -46,33 +24,26 @@ class VersionsActivity : Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     ui = Ui(this)
-    layout = Layout(this)
-    remote = Place(this).where() == Where.REMOTE
     ui.lightSystemBars(window)
-    app = VersionCard(this, ui, R.string.app_name, ::appPressed)
-    nouride = NourideCard(this, ui)
-    updater = AppUpdater(this, ::waits, onChange = ::showApp)
+    page = VersionsPage(this, ui, twoColumns = false)
     setContentView(views())
     FocusRing.follow(this)
     // Home's card for a new Nouride: the update starts here, where its progress is followed, once the check finds it.
-    if (savedInstanceState == null && !remote && intent.getBooleanExtra(EXTRA_UPDATE_NOURIDE, false)) nouride.updateWhenFound()
+    if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_UPDATE_NOURIDE, false)) page.updateNourideWhenFound()
   }
 
   override fun onResume() {
     super.onResume()
-    ServerState.listen(listener)
-    if (updater.resume()) Updates.waiting(this)?.let(updater::start)
-    showApp()
-    if (!remote) nouride.resume()
+    page.resume()
   }
 
   override fun onPause() {
-    ServerState.unlisten(listener)
+    page.pause()
     super.onPause()
   }
 
   override fun onDestroy() {
-    if (!remote) nouride.close()
+    page.close()
     super.onDestroy()
   }
 
@@ -81,27 +52,11 @@ class VersionsActivity : Activity() {
       orientation = LinearLayout.VERTICAL
       background = ui.page()
     }
-    root.addView(LinearLayout(this).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-      setPadding(ui.dp(8), ui.dp(8), ui.dp(16), ui.dp(8))
-      minimumHeight = ui.dp(56)
-      addView(ImageView(context).apply {
-        setImageResource(R.drawable.ic_back)
-        contentDescription = getString(R.string.close)
-        setPadding(ui.dp(8), ui.dp(8), ui.dp(8), ui.dp(8))
-        setOnClickListener { finish() }
-      }, LinearLayout.LayoutParams(ui.dp(44), ui.dp(44)))
-      addView(ui.text(18f, R.color.ink, bold = true).apply {
-        setText(R.string.versions_title)
-        setPadding(ui.dp(6), 0, 0, 0)
-      })
-    })
+    root.addView(backBar(this, ui, R.string.versions_title))
     val column = LinearLayout(this).apply {
       orientation = LinearLayout.VERTICAL
       setPadding(ui.dp(20), ui.dp(4), ui.dp(20), ui.dp(24))
-      addView(app.view, ui.fullWidth())
-      if (!remote) addView(nouride.view, ui.fullWidth(12))
+      addView(page.cards, ui.fullWidth())
     }
     root.addView(ScrollView(this).apply { addView(column) }, LinearLayout.LayoutParams(
       LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f,
@@ -109,59 +64,26 @@ class VersionsActivity : Activity() {
     return root
   }
 
-  private fun waits() = Updates.waitsFor(ServerState.phase, startPressed = false) { layout.installed }
-
-  private fun appPressed(button: VersionButton) {
-    when (button) {
-      VersionButton.CHECK -> checkApp()
-      VersionButton.UPDATE -> Updates.waiting(this)?.let(updater::start)
-      VersionButton.ALLOW -> updater.allowing()
-      VersionButton.INSTALL, VersionButton.NONE -> Unit
-    }
-  }
-
-  /** The feed asked now, however fresh the last answer, as More's Check for updates did. */
-  private fun checkApp() {
-    if (appStep == AppStep.CHECKING || updater.busy) return
-    appStep = AppStep.CHECKING
-    showApp()
-    thread(name = "update-check-now", isDaemon = true) {
-      val failed = try {
-        Updates.checkNow(this)
-        false
-      } catch (e: IOException) {
-        true
-      }
-      runOnUiThread {
-        if (isDestroyed) return@runOnUiThread
-        appStep = if (failed) AppStep.CHECK_FAILED else AppStep.UP_TO_DATE
-        showApp()
-      }
-    }
-  }
-
-  /** The app's card, from what the updater is doing and what the last check of the feed found. */
-  private fun showApp() {
-    val waiting: Release? = Updates.waiting(this)
-    val step = when {
-      updater.state == AppUpdater.State.DOWNLOADING -> AppStep.DOWNLOADING
-      updater.state == AppUpdater.State.INSTALLING -> AppStep.INSTALLING
-      appStep == AppStep.CHECKING -> AppStep.CHECKING
-      // As on Home's card: without Android's permission neither Update nor Try again goes anywhere.
-      waiting != null && !Updates.canInstall(this) -> AppStep.ALLOW
-      updater.state == AppUpdater.State.FAILED && waiting != null -> AppStep.DOWNLOAD_FAILED
-      Updates.failed(this) && waiting != null -> AppStep.INSTALL_FAILED
-      // While Nouride is first set up, Update waits for it, as on Home (`AppUpdater.start`).
-      waiting != null -> AppStep.READY
-      appStep == AppStep.CHECK_FAILED -> AppStep.CHECK_FAILED
-      else -> AppStep.UP_TO_DATE
-    }
-    val look = VersionLooks.app(step)
-    app.render(look, Updates.installedVersion(this), waiting?.version, updater.percent)
-  }
-
   companion object {
     /** Opened from Home's card for a new Nouride: start its update. */
     const val EXTRA_UPDATE_NOURIDE = "update_nouride"
   }
+}
+
+/** The top of a screen opened from More on a phone: its back, which closes it, and its name. */
+internal fun backBar(activity: Activity, ui: Ui, titleId: Int): View = LinearLayout(activity).apply {
+  orientation = LinearLayout.HORIZONTAL
+  gravity = Gravity.CENTER_VERTICAL
+  setPadding(ui.dp(8), ui.dp(8), ui.dp(16), ui.dp(8))
+  minimumHeight = ui.dp(56)
+  addView(ImageView(context).apply {
+    setImageResource(R.drawable.ic_back)
+    contentDescription = activity.getString(R.string.close)
+    setPadding(ui.dp(8), ui.dp(8), ui.dp(8), ui.dp(8))
+    setOnClickListener { activity.finish() }
+  }, LinearLayout.LayoutParams(ui.dp(44), ui.dp(44)))
+  addView(ui.text(18f, R.color.ink, bold = true).apply {
+    setText(titleId)
+    setPadding(ui.dp(6), 0, 0, 0)
+  })
 }

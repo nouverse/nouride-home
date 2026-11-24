@@ -93,7 +93,10 @@
   <string name="tab_home">Home</string>
   <string name="tab_connect">Connect</string>
   <string name="tab_more">More</string>
+  <!-- On a wide screen (a tablet, a TV, a phone turned sideways) More's cards are Settings in the sidebar. -->
+  <string name="settings_title">Settings</string>
   <string name="home_battery_banner">Nouride may stop when the screen is off. Fix it in More ›</string>
+  <string name="home_battery_banner_settings">Nouride may stop when the screen is off. Fix it in Settings ›</string>
 
   <string name="connect_ready_title">Open Nouride on another device</string>
   <string name="connect_ready_body">On a tablet, a computer or another phone on the same Wi-Fi, scan this code with its camera, or type the address in its browser.</string>
@@ -120,6 +123,7 @@
   <string name="where_connect">Connect</string>
   <string name="where_checking">Checking…</string>
   <string name="where_stops_here">Nouride on this phone turns off. Its agents stop answering until you switch back to this phone in More.</string>
+  <string name="where_stops_here_settings">Nouride on this phone turns off. Its agents stop answering until you switch back to this phone in Settings.</string>
   <string name="where_empty">Type the address first.</string>
   <string name="where_plain_http">Nouride Home only opens addresses that start with https://. Try it with https://.</string>
   <string name="where_not_an_address">That doesn\'t look like an address. It looks like nouride.example.com.</string>

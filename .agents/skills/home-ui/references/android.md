@@ -41,6 +41,37 @@ device) and **More** (what is rarely needed). The open tab's icon sits in a soft
 there needs the person. The bar is hidden while the first start sets Nouride up: its progress is the one thing to
 watch. Back from Connect or More goes Home; from Home it leaves the app (`ui/Tabs.kt`).
 
+## A wide screen
+
+A tablet, a TV, a phone turned sideways or a wide split screen gets the desktop's shape, not the phone's stretched
+(`spec/layout.md`, `ui/Sections.kt`). The window's width in dp decides, read as the screen is made; turning the phone or
+resizing a split screen makes the screen again, and the open section carries over (More is Settings, and back).
+
+| Width | What the person sees |
+| --- | --- |
+| under 720 dp | the phone: the bar at the bottom, as above, unchanged |
+| 720 to 959 dp | the desktop's sidebar (`ui/Sidebar.kt`) and one column |
+| 960 dp and up | the sidebar, and two columns where a page has them |
+
+- **The sidebar**, white, down the left, 228 dp: the cat on its disc and "Nouride Home" on top, then **Home**,
+  **Connect**, **Versions and updates**, **Settings**, and **Technical Logs** set apart at the bottom, each an icon and
+  its name; the open one in the lavender pill. A dot on Versions and updates while an update waits, on Settings while
+  the phone may stop Nouride with the screen off. It scrolls when the screen is too short for it (a phone turned
+  sideways), so Technical Logs is never cut off. No sidebar before the first question is answered nor while the first
+  setup runs: the question, or the setup's progress, stands alone in the middle of the screen.
+- **More's split**: Settings holds More's cards (where Nouride runs, keeping it running, the appearance, Turn off
+  Nouride); Versions and updates and Technical Logs are the same pages as the phone's screens of their own
+  (`ui/VersionsPage.kt`, `ui/LogsPage.kt`), drawn in the page with its name on top and no back arrow. Words that send
+  the person to More say Settings there (`home_battery_banner_settings`, `where_stops_here_settings`).
+- **Pages**: the section's name in Fredoka on top (the cat is in the sidebar), then the content, centred at a readable
+  width: 960 dp, Settings 720 dp; Technical Logs takes the whole page, its summary scrolling in the log's own box, as a
+  wide screen is often short. From 960 dp: Home's state card with the updates and the battery line beside it; Connect's
+  code on the left, the switch over the address beside it; the two version cards side by side. A column with nothing in
+  it gives its room to the other, which stands centred (`ui/Columns.kt`).
+- **A remote**: every item is reached with the D-pad and ringed (`FocusRing`). Focus starts on the open section; Left
+  from the page goes back to it, not to whichever item lies nearest; Up and Down stay in the sidebar; Right goes to the
+  page (`SidebarLayout`). Back from any section goes Home, and from Home it leaves the app.
+
 ## Home
 
 On a phone without Nouride, before anything runs, the first screen asks the one thing the app cannot answer for the
@@ -176,6 +207,7 @@ The same app runs on Android TV and Google TV, used from the sofa with a remote.
 - **Keep Nouride running**: Android TV offers no way to let an app run unrestricted, so the card, Home's reminder and
   More's dot are not shown there (`PowerSettings.keepRunning`).
 - **Connect** works on a network cable as on Wi-Fi.
+- **The shape**: a TV is a wide screen (above): the Google TV Streamer is 960 × 540 dp, the sidebar and two columns.
 - **The launcher**: the banner is the cat's head on lavender and "Nouride Home" (on yellow, "Nouride Home Dev"), made
   by `scripts/make-icons.py`.
 
