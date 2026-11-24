@@ -59,7 +59,7 @@ Android and desktop live in this repository with one version (`VERSION`): a rele
 | | Android | Desktop |
 | --- | --- | --- |
 | Code | `apps/android` (Kotlin) | `apps/desktop` (Tauri v2, React), `crates/` (Rust), `packages/ui-kit` |
-| Status | Released (0.2.0), arm64 phones | v0.1, macOS on Apple Silicon; not part of a release yet |
+| Status | Released (0.2.1) for phones; Android TV on `main`, not released yet | v0.1, macOS on Apple Silicon; not part of a release yet |
 | Download | [Releases](https://github.com/nouverse/nouride-home/releases): `nouride-home-X.Y.Z.apk` | Build it (below) |
 
 What both do the same way (the address of another computer, which links stay in the dashboard's window, release
@@ -79,7 +79,7 @@ choosing this phone again picks the install up as it was.
 
 ### What it does
 
-- Carries proot and a Debian arm64 system inside the APK. On the first start it unpacks Debian, then runs the official
+- Carries proot (static, so it needs nothing from Android's own libraries) and a Debian arm64 system inside the APK. On the first start it unpacks Debian, then runs the official
   Nouride installer inside it (`https://get.nouride.com/install.sh`), so the phone gets the same Nouride as any Linux
   install, at the latest release.
 - Keeps Nouride running from a foreground service, with the screen off, and starts it again if it stops on its own.
@@ -96,7 +96,14 @@ choosing this phone again picks the install up as it was.
 
 Nouride listens on its default port, `18254`. The dashboard is `http://<the phone's address>:18254/dashboard/`.
 
-Limits: arm64 phones only (Nouride has no 32-bit ARM build), sideloaded (not on Google Play: `targetSdk` is 28 on
+Android TV and Google TV: the app is in the TV's launcher, every screen works with a remote's D-pad, its words say
+"this TV", and Connect finds the TV's address on Wi-Fi or a network cable. Most TV boxes run 32-bit apps on a 64-bit
+kernel; the APK installs there too and runs the same aarch64 proot (tested on a Google TV Streamer, Android TV 14,
+`experiments/2026-11-24-android-tv/`). Android TV has no screen to exempt an app from battery saving, so the app does
+not ask for it there.
+
+Limits: a 64-bit kernel is needed (Nouride has no 32-bit ARM build); a device with a 32-bit kernel says so on its
+first screen and can still open a Nouride on another computer. Sideloaded (not on Google Play: `targetSdk` is 28 on
 purpose, see `AGENTS.md`). Another computer is reached over HTTPS only: the app speaks plain HTTP to its own daemon on
 the loopback and to nothing else (`res/xml/network_security_config.xml`), and a dashboard on the open internet is a
 login, so a password on the wire is not offered.
@@ -125,13 +132,14 @@ Everything installs without root, into one directory:
 ```sh
 scripts/setup-toolchain.sh ~/android-toolchain   # JDK 17, Android SDK, build tools, NDK
 . ~/android-toolchain/env.sh
-scripts/build-proot.sh                           # proot for arm64 Android, into apps/android/app/src/main/jniLibs/
+scripts/build-proot.sh                           # static aarch64 proot, into apps/android/app/src/main/jniLibs/arm64-v8a/
 scripts/build-rootfs.sh                          # the Debian arm64 layer, into apps/android/app/src/main/assets/rootfs.tgz
 cd apps/android && ./gradlew assembleDebug testDebugUnitTest
 ```
 
-The APK is `apps/android/app/build/outputs/apk/debug/app-debug.apk`. Every downloaded input is pinned by sha256 in
-`scripts/assets.lock`; the built proot and rootfs are not committed.
+The APK is `apps/android/app/build/outputs/apk/debug/app-debug.apk`. Gradle copies proot into `armeabi-v7a` as well
+and refuses an APK whose two folders differ. Every downloaded input is pinned by sha256 in `scripts/assets.lock`; the
+built proot and rootfs are not committed.
 
 ### Installing on a phone
 

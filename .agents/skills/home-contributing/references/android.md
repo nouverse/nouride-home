@@ -5,8 +5,12 @@ The Android app, in `apps/android` (Kotlin, Gradle, no third-party Android libra
 
 ## How it works
 
-1. The APK carries `libproot.so` and `libproot-loader.so` (built by `scripts/build-proot.sh`) and the Debian arm64
-   layer `assets/rootfs.tgz` (fetched by `scripts/build-rootfs.sh`).
+1. The APK carries `libproot.so` and `libproot-loader.so` (built by `scripts/build-proot.sh`, static aarch64) under
+   both `lib/arm64-v8a` and `lib/armeabi-v7a` (the same bytes: `Arm32Copy` in `build.gradle.kts` copies them, and
+   `checkApkNatives<Variant>`, run by assemble, refuses an APK whose two folders differ or that carries other native
+   code), and the Debian arm64 layer `assets/rootfs.tgz` (fetched by `scripts/build-rootfs.sh`). Before anything is
+   started, `server/DeviceSupport` runs proot's version check once: a kernel that refuses it (ENOEXEC) cannot run
+   Nouride, and the app says so (`Phase.UNSUPPORTED`) instead of unpacking and installing.
 2. On the first start, `install/` unpacks the rootfs into the app's data directory, then runs the official installer
    inside Debian (`Nouride.INSTALL`: the packages the minimal image lacks, then `https://get.nouride.com/install.sh`).
 3. `server/ServerService` is a foreground service of type `specialUse`. It holds a partial wake lock and a Wi-Fi lock,
@@ -55,7 +59,14 @@ Nouride listens on its default port, 18254 (`Nouride.PORT`), and the Router edit
 
 - **targetSdk 28.** From 29 on, Android refuses to run files from the app's data directory (W^X), and proot runs every
   Debian program from there. Termux targets 28 for the same reason. So the app is sideloaded, never on Google Play.
-- **arm64-v8a only.** Nouride ships no 32-bit ARM build.
+- **A 64-bit kernel, any userspace.** Nouride ships no 32-bit ARM build, and proot and Debian are aarch64. Most
+  Google TV and Android TV boxes run a 32-bit userspace on a 64-bit kernel: their PackageManager installs only an APK
+  with an `armeabi-v7a` folder (it never looks at the ELF inside), they have no `/system/bin/linker64`, yet an app
+  there may exec static aarch64 programs (fork, ptrace, mmap, sockets all pass the app's seccomp filter). So proot is
+  static, built against API 29 (`NDK_API` in `assets.lock`: a static bionic executable for an older API aborts with
+  "executable's TLS segment is underaligned"), and packaged in both folders. Never decide the architecture from
+  Java's `os.arch` or `uname` in the app's process: a 32-bit app on a 64-bit kernel reads `armv8l`. Measured on a
+  Google TV Streamer, `experiments/2026-11-24-android-tv/`.
 - **The official installer, never a bundled Nouride.** The phone gets the same release as every other install, and
   `nouride update` works as it does elsewhere.
 - **Pinned inputs.** `scripts/assets.lock` holds the sha256 of the proot and talloc archives and the Debian layer's
@@ -108,6 +119,25 @@ another); `.github/workflows/release.yml` runs on that (never on a push), builds
 1 000 + patch), so each release must be higher than the last. The workflow refuses an APK not signed with the key
 in `scripts/release-cert.sha256`: a phone refuses an update signed with another key. Never commit a keystore. Try a
 change to the workflow with a manual run (a dry run) before tagging.
+
+## On an Android TV
+
+What the TV changes: the launcher (`LEANBACK_LAUNCHER` and the banner, `res/drawable-xhdpi/banner.png`, drawn by
+`scripts/make-icons.py`), a remote's D-pad (`ui/FocusRing`, on every screen), the words (`res/values-television`,
+checked by `TelevisionWordsTest`), a wired network (`SupportText.lanAddressOf`), and no battery exemption to ask for
+(`PowerSettings.keepRunning`: Android TV's settings answer that request with an empty screen).
+
+- The Google TV Streamer the owner's family watches runs the Dev build. Before taking its screen, check
+  `adb shell dumpsys activity activities | grep topResumedActivity`; leave it on what was in front.
+- Wireless ADB's connect port changes when it is switched on again: probe 30000-49999 with an ADB CNXN, the port that
+  answers `STLS` is it.
+- `adb install` of a build new to the TV shows Play Protect's "unsafe app blocked" (targetSdk 28): someone, or the
+  D-pad over adb, opens "More details" and picks "Install anyway". With the TV in its screensaver the install is
+  rejected unseen: wake it first (`input keyevent KEYCODE_WAKEUP`). An update of the installed build asks nothing.
+- Walk a screen with `input keyevent DPAD_UP/DOWN/LEFT/RIGHT/CENTER/BACK` and read what has focus from
+  `uiautomator dump` (`focused="true"`).
+- `ps -A -o PID,PPID,USER,ARGS` shows `nouride start`; `run-as <id> kill -TERM <pid>` checks the supervisor.
+- Google TV's "Your apps" row draws the app's round icon; the banner is for launchers that show banners.
 
 ## On a real phone
 
