@@ -1,0 +1,29 @@
+{
+  "about": "Which shape the app's screen takes at a window's width, its sections in the sidebar's order, and the widths a page keeps. See spec/layout.md. `width` is the window's width: px on the desktop, dp on Android. A case's `expect` is both apps' answer; `android` or `desktop`, when present, is that app's own answer where the two differ today.",
+  "sidebar_from": 720,
+  "two_columns_from": 960,
+  "readable": {
+    "page": 960,
+    "settings": 720
+  },
+  "sections": [
+    { "section": "home", "apart": false },
+    { "section": "connect", "apart": false },
+    { "section": "versions", "apart": false },
+    { "section": "settings", "apart": false },
+    { "section": "logs", "apart": true }
+  ],
+  "widths": [
+    { "width": 360, "expect": { "sidebar": "none", "columns": 1 }, "desktop": { "sidebar": "rail", "columns": 1 } },
+    { "width": 560, "expect": { "sidebar": "none", "columns": 1 }, "desktop": { "sidebar": "rail", "columns": 1 } },
+    { "width": 719, "expect": { "sidebar": "none", "columns": 1 }, "desktop": { "sidebar": "rail", "columns": 1 } },
+    { "width": 720, "expect": { "sidebar": "labels", "columns": 1 } },
+    { "width": 820, "expect": { "sidebar": "labels", "columns": 1 } },
+    { "width": 873, "expect": { "sidebar": "labels", "columns": 1 } },
+    { "width": 959, "expect": { "sidebar": "labels", "columns": 1 } },
+    { "width": 960, "expect": { "sidebar": "labels", "columns": 2 }, "desktop": { "sidebar": "labels", "columns": 1 } },
+    { "width": 980, "expect": { "sidebar": "labels", "columns": 2 } },
+    { "width": 1200, "expect": { "sidebar": "labels", "columns": 2 } },
+    { "width": 1920, "expect": { "sidebar": "labels", "columns": 2 } }
+  ]
+}
