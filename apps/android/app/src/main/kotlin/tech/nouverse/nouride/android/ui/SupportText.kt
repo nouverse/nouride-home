@@ -40,10 +40,18 @@ object SupportText {
     }
   }
 
-  /** The phone's address on the Wi-Fi, or null without one. */
-  fun lanAddress(): String? =
+  /** The device's address on the home network, or null without one ([lanAddressOf]). */
+  fun lanAddress(): String? = lanAddressOf(
     NetworkInterface.getNetworkInterfaces()?.toList().orEmpty()
-      .filter { it.isUp && !it.isLoopback && it.name.startsWith("wlan") }
-      .flatMap { it.inetAddresses.toList() }
-      .firstOrNull { it is Inet4Address }?.hostAddress
+      .filter { it.isUp && !it.isLoopback }
+      .flatMap { nic -> nic.inetAddresses.toList().filterIsInstance<Inet4Address>().map { nic.name to it.hostAddress!! } },
+  )
+
+  /**
+   * The first IPv4 address on Wi-Fi (`wlan*`), else on a network cable (`eth*`, as many TV boxes are wired); never the
+   * mobile network's, which nothing at home can reach. Pure: [addresses] are (interface, address) pairs.
+   */
+  fun lanAddressOf(addresses: List<Pair<String, String>>): String? =
+    addresses.firstOrNull { it.first.startsWith("wlan") }?.second
+      ?: addresses.firstOrNull { it.first.startsWith("eth") }?.second
 }

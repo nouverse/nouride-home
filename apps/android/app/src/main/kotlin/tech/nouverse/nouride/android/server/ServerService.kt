@@ -128,6 +128,7 @@ class ServerService : Service() {
   }
 
   private fun runServer() {
+    if (!DeviceSupport.runs(layout.prootPaths().proot)) return refuseDevice()
     try {
       setup = if (!layout.rootfs.isDirectory || !layout.installed) SetupProgress() else null
       if (!layout.rootfs.isDirectory) extractRootfs()
@@ -143,6 +144,17 @@ class ServerService : Service() {
       ServerState.set(ServerState.Phase.FAILED, e.message ?: e.toString(), progress = null)
       showNotification()
     }
+  }
+
+  /**
+   * This device's kernel cannot run Nouride (`DeviceSupport`): nothing is unpacked or installed, Home says so, and the
+   * service stops, no longer asked to run after a restart.
+   */
+  private fun refuseDevice() {
+    event("this device cannot run Nouride: its kernel does not run 64-bit ARM programs")
+    getSharedPreferences(PREFS, MODE_PRIVATE).edit().putBoolean(PREF_RUN, false).apply()
+    finish()
+    ServerState.set(ServerState.Phase.UNSUPPORTED, progress = null)
   }
 
   private fun extractRootfs() {

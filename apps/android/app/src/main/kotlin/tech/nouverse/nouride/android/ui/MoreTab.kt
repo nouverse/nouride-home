@@ -13,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import tech.nouverse.nouride.android.R
+import tech.nouverse.nouride.android.power.KeepRunning
 import tech.nouverse.nouride.android.power.PowerSettings
 import tech.nouverse.nouride.android.server.RemoteHost
 import tech.nouverse.nouride.android.server.ServerState
@@ -195,10 +196,11 @@ internal class MoreTab(
   private fun divider(): View = View(activity).apply { setBackgroundColor(ui.color(R.color.line)) }
 
   /**
-   * [mayStop]: no battery exemption yet. [canTurnOff]: Nouride is on, or on its way. [where]: keeping it running and
-   * turning it off are this phone's own server's business, so both go away while Nouride lives on another machine.
+   * [keepRunning]: what there is to say about the battery exemption. [canTurnOff]: Nouride is on, or on its way.
+   * [where]: keeping it running and turning it off are this phone's own server's business, so both go away while
+   * Nouride lives on another machine.
    */
-  fun render(mayStop: Boolean, canTurnOff: Boolean, where: Where?, address: String?) {
+  fun render(keepRunning: KeepRunning, canTurnOff: Boolean, where: Where?, address: String?) {
     for ((each, view) in placeChoices) chosen(view, each == where)
     placeBody.setText(if (where == Where.REMOTE) R.string.place_remote_body else R.string.place_phone_body)
     // Before the first screen is answered, the choice is there with neither side lit, and no sentence claims either.
@@ -207,9 +209,11 @@ internal class MoreTab(
     placeAddress.text = address?.let(RemoteHost::shown)
     changeAddress.visibility = placeAddress.visibility
     val here = where != Where.REMOTE
-    running.visibility = if (here) View.VISIBLE else View.GONE
-    batteryOk.visibility = if (mayStop || !here) View.GONE else View.VISIBLE
-    batteryAsk.visibility = if (mayStop && here) View.VISIBLE else View.GONE
+    // On a TV with nothing to ask and no Autostart to name, the card would be a heading alone.
+    val anything = keepRunning != KeepRunning.NOTHING_TO_ASK || PowerSettings.asksForAutostart()
+    running.visibility = if (here && anything) View.VISIBLE else View.GONE
+    batteryOk.visibility = if (keepRunning == KeepRunning.ALLOWED && here) View.VISIBLE else View.GONE
+    batteryAsk.visibility = if (keepRunning == KeepRunning.ASK && here) View.VISIBLE else View.GONE
     turnOff.visibility = if (canTurnOff && here) View.VISIBLE else View.GONE
   }
 

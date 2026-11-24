@@ -76,6 +76,7 @@ its own button:
 | Running and answering | "Nouride is running." | Open Nouride |
 | Restarting on its own | "Nouride stopped for a moment and is starting again." | (none) |
 | Failed | What went wrong in one sentence, and what to do: "Nouride could not start. Check that the phone is on Wi-Fi, then try again." | Try again |
+| This phone cannot run it (`server/DeviceSupport`: a 32-bit kernel) | "Nouride can't run on this phone. This phone's system is too limited for Nouride. You can still open a Nouride that runs on another computer, at home or in the cloud." with the unplugged cat | Use Nouride on another computer |
 
 The first start shows a real bar under the sentence (`server/SetupProgress.kt`): what is happening now in plain words
 ("Downloading and installing Nouride"), "Step 4 of 5" and the percent. It never goes back and reaches 100 only when
@@ -105,6 +106,9 @@ Under the main state, only what a person acts on:
   the person to allow installing from the app: the same card says so in one sentence with Allow, which opens that
   setting, and the update goes on when they come back. Nothing of it shows while the first start sets Nouride up.
   Words only: no version code, sha, URL or file name; a failed download says to check the Wi-Fi and try again.
+
+On such a phone the first screen asks nothing: it says the same sentence, and its one button is Use Nouride on
+another computer. Try again is never offered there: nothing the person does on this phone changes the answer.
 
 ## Connect
 
@@ -158,6 +162,22 @@ is that computer's.
 - **Turn off Nouride**: amber words, not a button, so it is never pressed by mistake. It asks once: "Turn Nouride off?
   Your assistant will not answer until you start it again."
 - **Technical Logs ›**, last.
+
+## On a TV
+
+The same app runs on Android TV and Google TV, used from the sofa with a remote.
+
+- **Words**: Android reads `res/values-television` on a TV. Every sentence that calls the device a phone, taps, or
+  takes Wi-Fi as the only network has its TV form there ("Run it on this TV", "Select to update"), and
+  `TelevisionWordsTest` fails on a new one without it. A new sentence of that kind gets its TV form in the same change.
+- **Where the remote is**: a lavender ring around what the D-pad has reached (`ui/FocusRing`), on every screen. A new
+  screen calls `FocusRing.follow(this)` (`FocusRingTest`). Every button is reached with the arrows; nothing is reached
+  only by touch.
+- **Keep Nouride running**: Android TV offers no way to let an app run unrestricted, so the card, Home's reminder and
+  More's dot are not shown there (`PowerSettings.keepRunning`).
+- **Connect** works on a network cable as on Wi-Fi.
+- **The launcher**: the banner is the cat's head on lavender and "Nouride Home" (on yellow, "Nouride Home Dev"), made
+  by `scripts/make-icons.py`.
 
 ## How it looks
 

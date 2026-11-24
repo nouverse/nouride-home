@@ -1,0 +1,24 @@
+# Redmi Note 12 (topaz), Home Dev from this branch installed over the existing Home Dev, 2026-11-24
+ro.product.model=23021RAA2Y
+ro.build.version.release=15
+ro.product.cpu.abilist=arm64-v8a,armeabi-v7a,armeabi
+    primaryCpuAbi=arm64-v8a
+    lastUpdateTime=2026-11-24 22:03:38
+sha256 of lib/arm64/libproot.so as installed:
+d68e7a349288dc5b7ae3cb8af23e288e68733f84427324aed4e51d39b05697cd
+
+# service.log after the update and Start
+2026-11-24T22:04:19+0700 daemon started
+2026-11-24T22:04:20+0700 daemon exited with 1, restarting in 16s
+2026-11-24T22:04:36+0700 daemon started
+2026-11-24T22:04:37+0700 daemon exited with 1, restarting in 32s
+2026-11-24T22:05:09+0700 daemon started
+2026-11-24T22:05:13+0700 daemon ready
+
+# the two daemon exits: Nouride's lock named a PID that a restart of the phone had given to another process
+Error: another Nouride instance is running (PID 2128). Lock file: /srv/nouride/.nouride/data/nouride.lock
+✗ Error: another Nouride instance is running (PID 2128). Lock file: /srv/nouride/.nouride/data/nouride.lock
+{"timestamp":"2026-11-24T15:05:10.234Z","level":"warn","component":"daemon","message":"took over a stale lock: no daemon held it","data":{"lock":"/srv/nouride/.nouride/data/nouride.lock","why":"PID 2128 is gone"}}
+
+# /health on the phone's loopback
+{'status': 'ok', 'version': '0.8.41', 'uptime': 32} rss 85524480

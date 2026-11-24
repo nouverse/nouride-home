@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- On Android TV and Google TV (UI mode television), Android reads these in place of the phone's: the device is "the TV",
+     it is often wired rather than on Wi-Fi, and a remote selects rather than taps. Every sentence of values/strings.xml
+     that names this phone has its TV form here (TelevisionWordsTest); the rest is the same on both. -->
+<resources>
+  <string name="off_body">Press Start, and this TV becomes the home of your AI assistant.</string>
+  <string name="setting_up_body">This takes a few minutes the first time. Keep the TV on and connected to the internet.</string>
+  <string name="failed_body">Check that the TV is connected to the internet, then try again.</string>
+  <string name="unsupported_title">Nouride can\'t run on this TV</string>
+  <string name="unsupported_body">This TV\'s system is too limited for Nouride. You can still open a Nouride that runs on another computer, at home or in the cloud.</string>
+  <string name="no_wifi_title">This TV isn\'t on a network</string>
+  <string name="no_wifi">Connect it to your Wi-Fi or network cable to use Nouride from a computer or tablet.</string>
+  <string name="battery_body">Your TV may stop Nouride to save power. Allow it to keep running, even with the screen off.</string>
+  <string name="no_app_for_link">No app on this TV can open this link.</string>
+  <string name="update_installing">Almost done. When your TV asks, select Update.</string>
+  <string name="update_failed">The update didn\'t download. Check the TV\'s connection, then try again.</string>
+  <string name="download_no_room">There isn\'t enough room on this TV for %1$s. Free some space, then try again.</string>
+  <string name="connect_ready_body">On a tablet, a computer or a phone on the same network, scan this code with its camera, or type the address in its browser.</string>
+  <string name="access_body">Let a tablet, a computer or a phone on the same network open Nouride. Turn it off on a network you don\'t trust.</string>
+  <string name="this_phone_title">Only this TV can open Nouride</string>
+  <string name="this_phone_body">Turn on Open from other devices to use it on a tablet, a computer or a phone.</string>
+  <string name="where_body">Run it on this TV, or open a Nouride you already have on another computer, at home or in the cloud.</string>
+  <string name="where_phone">Run it on this TV</string>
+  <string name="where_stops_here">Nouride on this TV turns off. Its agents stop answering until you switch back to this TV in More.</string>
+  <string name="remote_running_body">It runs on another computer. This TV opens it.</string>
+  <string name="place_phone">This TV</string>
+  <string name="place_phone_body">Nouride runs here, on this TV.</string>
+  <string name="place_remote_body">This TV opens the Nouride at this address.</string>
+  <string name="battery_ok">Your TV lets Nouride run with the screen off.</string>
+  <string name="check_failed">Couldn\'t check. Check the TV\'s connection, then try again.</string>
+  <string name="appearance_phone">Same as TV</string>
+  <string name="notification_tap">Select to open Nouride Home</string>
+  <string name="notification_update">A new version is ready. Select to update.</string>
+  <string name="notification_nouride_update">A new Nouride is ready. Select to update.</string>
+  <string name="notification_updates">Updates are ready. Select to update.</string>
+  <string name="leave_dashboard_body">Nouride keeps running and your agents keep answering. Select Open Nouride on Home to come back.</string>
+</resources>

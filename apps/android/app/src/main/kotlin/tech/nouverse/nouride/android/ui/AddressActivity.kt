@@ -47,6 +47,7 @@ class AddressActivity : Activity() {
     ui.lightSystemBars(window)
     val place = Place(this)
     setContentView(views(place.lastAddress(), AddressForm.stopsHere(place.where(), ServerState.phase)))
+    FocusRing.follow(this)
     field.requestFocus()
   }
 

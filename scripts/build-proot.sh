@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
 # Builds proot (termux/proot, the release Termux ships) and its loader for arm64 Android
-# with the NDK, talloc linked in statically, and puts them where Gradle packages them:
+# with the NDK, both static (talloc and bionic linked in), and puts them where Gradle packages them:
 #
 #   apps/android/app/src/main/jniLibs/arm64-v8a/libproot.so          the proot executable
 #   apps/android/app/src/main/jniLibs/arm64-v8a/libproot-loader.so   the loader proot starts every guest program with
 #
 # Android installs lib*.so from the APK into the app's nativeLibraryDir, the one place an app
 # may execute files from. The names are a packaging trick: both are executables, not libraries.
+#
+# Static, so they need no /system/bin/linker64: a device whose userspace is 32-bit on a 64-bit
+# kernel (most Google TV and Android TV boxes) has none, yet runs aarch64 executables from an
+# app (experiments/2026-11-24-android-tv/). Gradle packages the same two files under
+# armeabi-v7a too (apps/android/app/build.gradle.kts), so such a device installs the APK.
+# NDK_API is 29: a static bionic executable built for an older API aborts at start with
+# "executable's TLS segment is underaligned". A static binary carries its own libc, so it
+# runs on the app's older Android versions too (minSdk 24).
 #
 # Differences from Termux's build: talloc is static (no RUNPATH into /data/data/com.termux),
 # no libandroid-shmem (it only shares SysV shm with Termux's own processes), and only the
@@ -97,7 +105,7 @@ unzip -q "$WORK/dl/proot-$PROOT_VERSION.zip" -d "$WORK/src"
   sed -i '1i #include <string.h>' src/extension/ashmem_memfd/ashmem_memfd.c
   export CFLAGS="-I$WORK/talloc/include"
   export CPPFLAGS="-DARG_MAX=131072 -DVERSION=\\\"$PROOT_VERSION\\\""
-  export LDFLAGS="-L$WORK/talloc/lib"
+  export LDFLAGS="-L$WORK/talloc/lib -static"
   build() {
     make -C src "$1" \
       STRIP="$TOOLS/llvm-strip" OBJCOPY="$TOOLS/llvm-objcopy" OBJDUMP="$TOOLS/llvm-objdump" \
@@ -115,6 +123,13 @@ unzip -q "$WORK/dl/proot-$PROOT_VERSION.zip" -d "$WORK/src"
   mkdir -p "$OUT"
   "$TOOLS/llvm-strip" -o "$OUT/libproot.so" src/proot
   "$TOOLS/llvm-strip" -o "$OUT/libproot-loader.so" src/loader/loader
+  # A dynamic executable would ask for /system/bin/linker64, which 32-bit-userspace devices lack.
+  for f in "$OUT/libproot.so" "$OUT/libproot-loader.so"; do
+    if "$TOOLS/llvm-readelf" -l "$f" | grep -q INTERP; then
+      echo "$f is not static: it names a program interpreter" >&2
+      exit 1
+    fi
+  done
 )
 
 (cd "$OUT" && sha256sum libproot.so libproot-loader.so)

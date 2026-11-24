@@ -1,3 +1,5 @@
+import com.android.build.api.artifact.SingleArtifact
+import java.util.zip.ZipFile
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 /**
@@ -32,7 +34,11 @@ android {
     targetSdk = 28
     versionCode = versionCodeOf(releaseVersion)
     versionName = releaseVersion
-    ndk { abiFilters += "arm64-v8a" }
+    // proot is a static aarch64 executable (scripts/build-proot.sh), needing a 64-bit kernel and nothing else. Most
+    // Google TV and Android TV boxes run 64-bit kernels under a 32-bit userspace: they only install an APK with an
+    // armeabi-v7a folder, then run aarch64 executables from it as any other (experiments/2026-11-24-android-tv/). The
+    // same two files go in both folders (`Arm32Copy` below).
+    ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     // Where the app looks for its own updates (update/Updates.kt). A test build may point it elsewhere.
     resValue("string", "update_feed", System.getenv("NOURIDE_HOME_UPDATE_FEED")
       ?: "https://api.github.com/repos/nouverse/nouride-home/releases/latest")
@@ -108,6 +114,70 @@ android {
   lint {
     // targetSdk 28 is deliberate (see above); the app is sideloaded, not published on Play.
     disable += "ExpiredTargetSdkVersion"
+  }
+}
+
+/**
+ * proot's two files under armeabi-v7a, copied from arm64-v8a where scripts/build-proot.sh puts them: one build, never a
+ * second copy kept by hand. Android does not look at the ELF inside an ABI folder; it only picks the folder.
+ */
+abstract class Arm32Copy : DefaultTask() {
+  @get:InputDirectory
+  abstract val arm64: DirectoryProperty
+
+  @get:OutputDirectory
+  abstract val outputDir: DirectoryProperty
+
+  @TaskAction
+  fun copy() {
+    val into = outputDir.get().asFile.resolve("armeabi-v7a")
+    into.deleteRecursively()
+    into.mkdirs()
+    val files = arm64.get().asFile.listFiles { f -> f.name.endsWith(".so") }.orEmpty()
+    require(files.isNotEmpty()) { "no proot in ${arm64.get().asFile}: run scripts/build-proot.sh" }
+    for (file in files) file.copyTo(into.resolve(file.name)).setExecutable(true, false)
+  }
+}
+
+/**
+ * The APK carries proot and its loader under both ABI folders, the same bytes in each, and no other native code: a
+ * library built for one ABI only would be wrong in the other folder.
+ */
+abstract class ApkNativesCheck : DefaultTask() {
+  @get:InputFiles
+  abstract val apks: DirectoryProperty
+
+  @TaskAction
+  fun check() {
+    val apk = apks.get().asFile.listFiles { f -> f.extension == "apk" }.orEmpty().singleOrNull()
+      ?: throw GradleException("expected one APK in ${apks.get().asFile}")
+    ZipFile(apk).use { zip ->
+      val libs = zip.entries().asSequence().filter { it.name.startsWith("lib/") && !it.isDirectory }
+        .associate { it.name to zip.getInputStream(it).use { input -> input.readBytes() } }
+      val expected = listOf("arm64-v8a", "armeabi-v7a").flatMap { abi ->
+        listOf("libproot.so", "libproot-loader.so").map { "lib/$abi/$it" }
+      }.toSet()
+      if (libs.keys != expected) throw GradleException("${apk.name} carries ${libs.keys.sorted()}, expected ${expected.sorted()}")
+      for (name in listOf("libproot.so", "libproot-loader.so")) {
+        if (!libs.getValue("lib/arm64-v8a/$name").contentEquals(libs.getValue("lib/armeabi-v7a/$name"))) {
+          throw GradleException("${apk.name}: $name differs between arm64-v8a and armeabi-v7a")
+        }
+      }
+    }
+  }
+}
+
+androidComponents {
+  onVariants { variant ->
+    val name = variant.name.replaceFirstChar { it.uppercase() }
+    val copy = tasks.register<Arm32Copy>("arm32Copy$name") {
+      arm64.set(layout.projectDirectory.dir("src/main/jniLibs/arm64-v8a"))
+    }
+    variant.sources.jniLibs?.addGeneratedSourceDirectory(copy, Arm32Copy::outputDir)
+    val check = tasks.register<ApkNativesCheck>("checkApkNatives$name") {
+      apks.set(variant.artifacts.get(SingleArtifact.APK))
+    }
+    tasks.matching { it.name == "assemble$name" }.configureEach { dependsOn(check) }
   }
 }
 

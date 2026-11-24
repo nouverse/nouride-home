@@ -53,6 +53,7 @@ class VersionsActivity : Activity() {
     nouride = NourideCard(this, ui)
     updater = AppUpdater(this, ::waits, onChange = ::showApp)
     setContentView(views())
+    FocusRing.follow(this)
     // Home's card for a new Nouride: the update starts here, where its progress is followed, once the check finds it.
     if (savedInstanceState == null && !remote && intent.getBooleanExtra(EXTRA_UPDATE_NOURIDE, false)) nouride.updateWhenFound()
   }

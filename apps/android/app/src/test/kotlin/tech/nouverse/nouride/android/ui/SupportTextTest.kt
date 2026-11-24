@@ -37,4 +37,13 @@ class SupportTextTest {
       file.delete()
     }
   }
+
+  @Test
+  fun `the home network's address is the Wi-Fi's, else the cable's, never the mobile network's`() {
+    assertEquals("192.168.1.23", SupportText.lanAddressOf(listOf("rmnet_data0" to "10.0.0.5", "wlan0" to "192.168.1.23")))
+    // A TV box on a network cable.
+    assertEquals("192.168.1.40", SupportText.lanAddressOf(listOf("eth0" to "192.168.1.40")))
+    assertEquals("192.168.1.23", SupportText.lanAddressOf(listOf("eth0" to "192.168.1.40", "wlan0" to "192.168.1.23")))
+    assertEquals(null, SupportText.lanAddressOf(listOf("rmnet_data0" to "10.0.0.5")))
+  }
 }

@@ -41,6 +41,16 @@ class StatusLookTest {
   }
 
   @Test
+  fun `a device that cannot run Nouride says so, and offers another computer rather than Try again`() {
+    val look = StatusLook.of(Phase.UNSUPPORTED, answering = false)
+    assertEquals(Words.UNSUPPORTED, look.words)
+    assertEquals(Action.ELSEWHERE, look.action)
+    assertEquals(Tone.WARN, look.tone)
+    assertFalse(look.busy)
+    assertFalse(StatusLook.canTurnOff(Phase.UNSUPPORTED))
+  }
+
+  @Test
   fun `a failure offers Try again and never a phase name`() {
     val look = StatusLook.of(Phase.FAILED, answering = false)
     assertEquals(Words.FAILED, look.words)

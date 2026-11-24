@@ -13,12 +13,15 @@ enum class Mascot { HELLO, RIDE, THUMBS, UNPLUGGED }
 /** The colour of the card around the cat. */
 enum class Tone { CALM, BUSY, GOOD, WARN }
 
-/** The one big button, or none while the app is busy and there is nothing to press. */
-enum class Action { START, OPEN, RETRY, NONE }
+/**
+ * The one big button, or none while the app is busy and there is nothing to press. ELSEWHERE: this device cannot run
+ * Nouride, so the button opens the address of another computer.
+ */
+enum class Action { START, OPEN, RETRY, ELSEWHERE, NONE }
 
 /** Which sentence the screen says. Each has a title and a body in `strings.xml`. */
 enum class Words {
-  OFF, SETTING_UP, STARTING, WAKING, RUNNING, RESTARTING, STOPPING, FAILED,
+  OFF, SETTING_UP, STARTING, WAKING, RUNNING, RESTARTING, STOPPING, FAILED, UNSUPPORTED,
   REMOTE_CHECKING, REMOTE_RUNNING, REMOTE_DOWN, REMOTE_UNSURE,
 }
 
@@ -41,6 +44,8 @@ object StatusLook {
     Phase.RESTARTING -> Look(Mascot.RIDE, Tone.BUSY, Words.RESTARTING, Action.NONE, busy = true)
     Phase.STOPPING -> Look(Mascot.HELLO, Tone.CALM, Words.STOPPING, Action.NONE, busy = true)
     Phase.FAILED -> Look(Mascot.UNPLUGGED, Tone.WARN, Words.FAILED, Action.RETRY, busy = false)
+    // Trying again cannot help: the way on is Nouride on another computer.
+    Phase.UNSUPPORTED -> Look(Mascot.UNPLUGGED, Tone.WARN, Words.UNSUPPORTED, Action.ELSEWHERE, busy = false)
   }
 
   /**
@@ -55,7 +60,8 @@ object StatusLook {
   }
 
   /** Whether "Turn off" is offered: whenever Nouride is on or on its way, never when it is off already. */
-  fun canTurnOff(phase: Phase): Boolean = phase != Phase.STOPPED && phase != Phase.STOPPING && phase != Phase.FAILED
+  fun canTurnOff(phase: Phase): Boolean =
+    phase != Phase.STOPPED && phase != Phase.STOPPING && phase != Phase.FAILED && phase != Phase.UNSUPPORTED
 
   /** Whether "Use from another device" is offered: only when there is something to reach. */
   fun canShare(look: Look): Boolean = look.action == Action.OPEN

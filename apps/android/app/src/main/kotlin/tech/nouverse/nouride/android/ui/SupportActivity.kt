@@ -44,6 +44,7 @@ class SupportActivity : Activity() {
     layout = Layout(this)
     ui.lightSystemBars(window)
     setContentView(views())
+    FocusRing.follow(this)
   }
 
   override fun onResume() {

@@ -11,7 +11,10 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import tech.nouverse.nouride.android.R
+import tech.nouverse.nouride.android.power.KeepRunning
 import tech.nouverse.nouride.android.power.PowerSettings
+import tech.nouverse.nouride.android.Layout
+import tech.nouverse.nouride.android.server.DeviceSupport
 import tech.nouverse.nouride.android.server.HealthPoller
 import tech.nouverse.nouride.android.server.Place
 import tech.nouverse.nouride.android.server.RemoteReply
@@ -68,6 +71,7 @@ class StatusActivity : Activity() {
     ui = Ui(this)
     ui.lightSystemBars(window)
     setContentView(views())
+    FocusRing.follow(this)
     show(savedInstanceState?.getString(STATE_TAB)?.let { name -> Tab.values().firstOrNull { it.name == name } } ?: Tab.HOME)
     if (savedInstanceState == null) handleExtras(intent)
   }
@@ -117,10 +121,14 @@ class StatusActivity : Activity() {
   /** Never while Nouride lives elsewhere: there is no server of this phone's to start. */
   private fun startServer() {
     if (place.where() == Where.REMOTE) return openDashboard()
+    // Said on Home at once, rather than asking for the battery exemption of something that cannot run.
+    if (!runsHere()) return ServerState.set(ServerState.Phase.UNSUPPORTED, progress = null)
     update.starting()
     ServerService.start(this)
-    if (!PowerSettings.isExempt(this)) startActivity(PowerSettings.exemptionRequest(this))
+    if (PowerSettings.keepRunning(this) == KeepRunning.ASK) startActivity(PowerSettings.exemptionRequest(this))
   }
+
+  private fun runsHere(): Boolean = DeviceSupport.runs(Layout(this).prootPaths().proot)
 
   private fun openDashboard() = startActivity(Intent(this, DashboardActivity::class.java))
 
@@ -169,7 +177,8 @@ class StatusActivity : Activity() {
     val address = place.address()
     val look = if (where == Where.REMOTE) StatusLook.remote(reply)
     else StatusLook.of(ServerState.phase, answering = ServerState.health?.ok == true)
-    val mayStop = where == Where.PHONE && !PowerSettings.isExempt(this)
+    val keepRunning = PowerSettings.keepRunning(this)
+    val mayStop = where == Where.PHONE && keepRunning == KeepRunning.ASK
     val barShown = Tabs.barShown(look, firstStart = ServerState.progress != null)
     if (!barShown && tab != Tab.HOME) return show(Tab.HOME)
     bar.view.visibility = if (barShown) View.VISIBLE else View.GONE
@@ -178,9 +187,9 @@ class StatusActivity : Activity() {
       ?.takeIf { where == Where.PHONE && ServerState.health?.ok == true && ServerState.progress == null }
     nourideUpdate.render(nourideReady)
     bar.attention(Tab.MORE, UpdateNotices.moreDot(mayStop, app = Updates.waiting(this) != null, nouride = nourideReady != null))
-    home.render(look, mayStop, where, address)
+    home.render(look, mayStop, where, address, runsHere())
     if (tab == Tab.CONNECT) connect.render(look, where, address)
-    more.render(mayStop, where != Where.REMOTE && StatusLook.canTurnOff(ServerState.phase), where, address)
+    more.render(keepRunning, where != Where.REMOTE && StatusLook.canTurnOff(ServerState.phase), where, address)
   }
 
   private fun onPrimary() {
@@ -191,6 +200,7 @@ class StatusActivity : Activity() {
     when (StatusLook.of(ServerState.phase, ServerState.health?.ok == true).action) {
       Action.START, Action.RETRY -> startServer()
       Action.OPEN -> openDashboard()
+      Action.ELSEWHERE -> askForAddress()
       Action.NONE -> Unit
     }
   }

@@ -1,0 +1,54 @@
+# /health from the LAN every 30 s, TV put to sleep at 14:48:00 UTC (KEYCODE_SLEEP), woken by a remote's key at 14:50:28
+14:49:33 HTTP200 uptime=420
+14:50:03 HTTP200 uptime=450
+14:50:33 HTTP200 uptime=480
+14:51:03 HTTP200 uptime=510
+14:51:33 HTTP200 uptime=540
+14:52:03 HTTP200 uptime=570
+14:52:33 HTTP200 uptime=600
+14:53:03 HTTP200 uptime=21
+14:53:33 HTTP200 uptime=51
+14:54:03 HTTP200 uptime=81
+14:54:33 HTTP200 uptime=111
+14:55:03 HTTP200 uptime=142
+14:55:33 HTTP200 uptime=172
+14:56:03 HTTP200 uptime=202
+14:56:33 HTTP200 uptime=232
+14:57:03 HTTP200 uptime=262
+14:57:33 HTTP200 uptime=292
+14:58:03 HTTP200 uptime=20
+14:58:34 HTTP200 uptime=50
+14:59:04 HTTP200 uptime=80
+14:59:34 HTTP200 uptime=110
+15:00:04 HTTP200 uptime=140
+15:00:34 HTTP200 uptime=170
+15:01:04 HTTP200 uptime=200
+
+# then every 60 s with the TV's power state; the family's use of the TV from about 15:14 (YouTube in front at 15:29)
+15:03:21 mWakefulness=Awake HTTP200 uptime=337
+15:04:21 mWakefulness=Awake HTTP200 uptime=397
+15:05:22 mWakefulness=Awake HTTP200 uptime=458
+15:06:22 mWakefulness=Awake HTTP200 uptime=518
+15:07:22 mWakefulness=Awake HTTP200 uptime=578
+15:08:22 mWakefulness=Awake HTTP200 uptime=638
+15:09:22 mWakefulness=Awake HTTP200 uptime=698
+15:10:22 mWakefulness=Awake HTTP200 uptime=758
+15:11:23 mWakefulness=Awake HTTP200 uptime=819
+15:12:23 mWakefulness=Awake HTTP200 uptime=879
+15:13:23 mWakefulness=Dreaming HTTP200 uptime=939
+15:14:23 mWakefulness=Awake HTTP200 uptime=999
+15:15:23 mWakefulness=Awake HTTP200 uptime=1059
+15:16:23 mWakefulness=Awake HTTP200 uptime=1119
+15:17:23 mWakefulness=Awake HTTP200 uptime=1179
+15:18:23 mWakefulness=Awake HTTP200 uptime=1239
+15:19:23 mWakefulness=Awake HTTP200 uptime=1300
+15:20:23 mWakefulness=Awake HTTP200 uptime=1360
+15:21:24 mWakefulness=Awake HTTP200 uptime=1420
+15:22:24 mWakefulness=Awake HTTP200 uptime=1480
+15:23:24 mWakefulness=Awake HTTP200 uptime=1540
+15:24:24 mWakefulness=Awake HTTP200 uptime=1600
+15:25:24 mWakefulness=Awake HTTP200 uptime=1660
+15:26:24 mWakefulness=Awake HTTP200 uptime=1720
+15:27:24 mWakefulness=Awake HTTP200 uptime=1780
+15:28:24 mWakefulness=Awake HTTP200 uptime=1840
+15:29:24 mWakefulness=Awake HTTP200 uptime=1901

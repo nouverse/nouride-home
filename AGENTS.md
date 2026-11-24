@@ -2,8 +2,8 @@
 
 Nouride Home is two apps in one repository, with one version (`VERSION`):
 
-- **Android** (`apps/android`, `tech.nouverse.nouride.home`): runs Nouride on the phone itself, with proot and a
-  Debian arm64 rootfs inside the APK, the official Nouride installer run inside Debian on the first start, and a
+- **Android** (`apps/android`, `tech.nouverse.nouride.home`): runs Nouride on the phone (or an Android TV) itself, with
+  proot and a Debian arm64 rootfs inside the APK, the official Nouride installer run inside Debian on the first start, and a
   foreground service that keeps `nouride start` running; or opens a Nouride on another computer. Kotlin, Gradle, no
   third-party Android libraries.
 - **Desktop** (`apps/desktop`, `crates/`, `packages/ui-kit`, `tech.nouverse.nouride.home`): runs Nouride on this
@@ -54,7 +54,11 @@ Android:
 
 7. `targetSdk` stays 28. From 29 on, Android forbids running files from the app's data directory, and proot runs every
    Debian program from there. The app is sideloaded, never on Google Play, for the same reason.
-8. arm64-v8a only. Nouride has no 32-bit ARM build.
+8. A 64-bit kernel is required: Nouride has no 32-bit ARM build, and proot and Debian are aarch64. The APK also
+   carries `armeabi-v7a`, so devices with a 32-bit userspace on a 64-bit kernel (most Google TV and Android TV boxes)
+   install it; the files in both folders are the same static aarch64 proot and loader (`scripts/build-proot.sh`,
+   `Arm32Copy` in `apps/android/app/build.gradle.kts`). A device whose kernel is 32-bit is told so on its first screen
+   (`server/DeviceSupport`).
 9. Every downloaded input is pinned by sha256 in `scripts/assets.lock`. A new version of proot, talloc or the Debian
    layer changes the lock in the same commit.
 
