@@ -49,7 +49,7 @@ object Updates {
    */
   fun waitsFor(phase: ServerState.Phase, startPressed: Boolean, installed: () -> Boolean): Boolean = when (phase) {
     ServerState.Phase.EXTRACTING, ServerState.Phase.INSTALLING -> true
-    ServerState.Phase.FAILED -> false
+    ServerState.Phase.FAILED, ServerState.Phase.UNSUPPORTED -> false
     else -> startPressed && !installed()
   }
 

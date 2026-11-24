@@ -26,6 +26,9 @@
   <string name="stopping_body">Just a moment.</string>
   <string name="failed_title">Nouride could not start</string>
   <string name="failed_body">Check that the phone is on Wi-Fi, then try again.</string>
+  <!-- A device whose kernel cannot run Nouride's programs (server/DeviceSupport): nothing to retry. -->
+  <string name="unsupported_title">Nouride can\'t run on this phone</string>
+  <string name="unsupported_body">This phone\'s system is too limited for Nouride. You can still open a Nouride that runs on another computer, at home or in the cloud.</string>
 
   <string name="action_start">Start</string>
   <string name="action_open">Open Nouride</string>

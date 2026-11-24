@@ -199,6 +199,7 @@ internal fun Words.title(): Int = when (this) {
   Words.RESTARTING -> R.string.restarting_title
   Words.STOPPING -> R.string.stopping_title
   Words.FAILED -> R.string.failed_title
+  Words.UNSUPPORTED -> R.string.unsupported_title
   Words.REMOTE_CHECKING, Words.REMOTE_UNSURE -> R.string.remote_title
   Words.REMOTE_RUNNING -> R.string.running_title
   Words.REMOTE_DOWN -> R.string.remote_down_title
@@ -213,6 +214,7 @@ internal fun Words.body(): Int = when (this) {
   Words.RESTARTING -> R.string.restarting_body
   Words.STOPPING -> R.string.stopping_body
   Words.FAILED -> R.string.failed_body
+  Words.UNSUPPORTED -> R.string.unsupported_body
   Words.REMOTE_CHECKING -> R.string.remote_checking_body
   Words.REMOTE_RUNNING -> R.string.remote_running_body
   Words.REMOTE_DOWN -> R.string.remote_down_body
@@ -231,5 +233,6 @@ internal fun Action.label(): Int? = when (this) {
   Action.START -> R.string.action_start
   Action.OPEN -> R.string.action_open
   Action.RETRY -> R.string.action_retry
+  Action.ELSEWHERE -> R.string.where_remote
   Action.NONE -> null
 }

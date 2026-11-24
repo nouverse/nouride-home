@@ -55,17 +55,25 @@ internal class HomeTab(
     setOnClickListener { onKeepRunning() }
   }
 
-  /** The first screen: one question, two answers, and nothing runs until one of them is pressed. */
+  private val chooseMascot = ImageView(context).apply { adjustViewBounds = true }
+  private val chooseTitle: TextView = ui.text(24f, R.color.ink, bold = true, center = true)
+  private val chooseBody: TextView = ui.text(16f, R.color.muted, center = true)
+  private val runHere: Button = ui.primary { onRunHere() }.apply { setText(R.string.where_phone) }
+  private val remoteMain: Button = ui.primary { onConnectRemote() }.apply { setText(R.string.where_remote) }
+  private val remoteSecond: Button = ui.secondary { onConnectRemote() }.apply { setText(R.string.where_remote) }
+
+  /**
+   * The first screen: one question, two answers, and nothing runs until one of them is pressed. On a device that
+   * cannot run Nouride (`DeviceSupport`) it says so instead, and another computer is the one way on.
+   */
   private val choose: LinearLayout = ui.card(padding = 24).apply {
     gravity = Gravity.CENTER_HORIZONTAL
-    addView(ImageView(context).apply {
-      setImageResource(R.drawable.mascot_hello)
-      adjustViewBounds = true
-    }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(180)))
-    addView(ui.text(24f, R.color.ink, bold = true, center = true).apply { setText(R.string.where_title) }, ui.fullWidth(16))
-    addView(ui.text(16f, R.color.muted, center = true).apply { setText(R.string.where_body) }, ui.fullWidth(8))
-    addView(ui.primary { onRunHere() }.apply { setText(R.string.where_phone) }, ui.fullWidth(22))
-    addView(ui.secondary { onConnectRemote() }.apply { setText(R.string.where_remote) }, ui.fullWidth(8))
+    addView(chooseMascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(180)))
+    addView(chooseTitle, ui.fullWidth(16))
+    addView(chooseBody, ui.fullWidth(8))
+    addView(runHere, ui.fullWidth(22))
+    addView(remoteMain, ui.fullWidth(22))
+    addView(remoteSecond, ui.fullWidth(8))
   }
 
   /** Where the other computer is, under the sentence, only while Nouride lives there. */
@@ -115,10 +123,16 @@ internal class HomeTab(
 
   /**
    * [mayStop]: the phone may stop Nouride with the screen off (no battery exemption yet). [where]: null until the person
-   * has said where Nouride lives, which is the question this tab opens on.
+   * has said where Nouride lives, which is the question this tab opens on. [runsHere]: this device can run Nouride.
    */
-  fun render(look: Look, mayStop: Boolean, where: Where?, address: String?) {
+  fun render(look: Look, mayStop: Boolean, where: Where?, address: String?, runsHere: Boolean) {
     choose.visibility = if (where == null) View.VISIBLE else View.GONE
+    chooseMascot.setImageResource(if (runsHere) R.drawable.mascot_hello else R.drawable.mascot_unplugged)
+    chooseTitle.setText(if (runsHere) R.string.where_title else R.string.unsupported_title)
+    chooseBody.setText(if (runsHere) R.string.where_body else R.string.unsupported_body)
+    runHere.visibility = if (runsHere) View.VISIBLE else View.GONE
+    remoteMain.visibility = if (runsHere) View.GONE else View.VISIBLE
+    remoteSecond.visibility = if (runsHere) View.VISIBLE else View.GONE
     hero.visibility = if (where == null) View.GONE else View.VISIBLE
     // A server this phone does not run has nothing to say about its battery.
     battery.visibility = if (where == Where.PHONE && mayStop && ServerState.progress == null) View.VISIBLE else View.GONE

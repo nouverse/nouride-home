@@ -42,5 +42,7 @@ class UpdateReceiverTest {
     assertFalse(Updates.waitsFor(Phase.STOPPED, startPressed = false, installed = notYet))
     // A setup that failed may be what the update fixes.
     assertFalse(Updates.waitsFor(Phase.FAILED, startPressed = true, installed = notYet))
+    // Nor does a device that cannot run Nouride: nothing is being set up there.
+    assertFalse(Updates.waitsFor(Phase.UNSUPPORTED, startPressed = true, installed = notYet))
   }
 }

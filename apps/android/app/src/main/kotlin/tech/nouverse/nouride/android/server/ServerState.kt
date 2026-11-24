@@ -5,7 +5,8 @@ import android.os.Looper
 
 /** What the service is doing, for the status screen and the notification. Same process only. */
 object ServerState {
-  enum class Phase { STOPPED, EXTRACTING, INSTALLING, STARTING, RUNNING, RESTARTING, STOPPING, FAILED }
+  /** UNSUPPORTED: this device's kernel cannot run Nouride at all (`DeviceSupport`); nothing was started. */
+  enum class Phase { STOPPED, EXTRACTING, INSTALLING, STARTING, RUNNING, RESTARTING, STOPPING, FAILED, UNSUPPORTED }
 
   @Volatile
   var phase: Phase = Phase.STOPPED
