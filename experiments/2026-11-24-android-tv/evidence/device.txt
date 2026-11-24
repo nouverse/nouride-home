@@ -1,0 +1,14 @@
+# getprop and kernel, the Google TV Streamer, 2026-11-24
+ro.product.model=Google TV Streamer
+ro.product.device=kirkwood
+ro.build.version.release=14
+ro.build.version.sdk=34
+ro.product.cpu.abilist=armeabi-v7a,armeabi
+ro.product.cpu.abilist64=
+ro.zygote=zygote32
+ro.build.characteristics=tv,nosdcard
+uname -m (shell, a 32-bit process): armv8l
+uname -r: 5.15.180-android14-11-gf55c0c36ffcd-ab13512086
+linker64: ls: /system/bin/linker64: No such file or directory
+MemTotal:        3962204 kB
+MemFree:          328864 kB

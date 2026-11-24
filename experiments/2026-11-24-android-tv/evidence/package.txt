@@ -1,0 +1,5 @@
+# dumpsys package, Home Dev as installed from this branch
+    primaryCpuAbi=armeabi-v7a
+    secondaryCpuAbi=null
+    versionCode=1 minSdk=24 targetSdk=28
+    versionName=0.0.0-dev

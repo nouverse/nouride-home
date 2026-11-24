@@ -1,0 +1,14 @@
+2026-11-24T21:37:53+0700 server started
+2026-11-24T21:38:10+0700 rootfs unpacked: 5442 entries in 16s
+2026-11-24T21:38:10+0700 installer started
+2026-11-24T21:39:52+0700 installer exited with 0
+2026-11-24T21:39:52+0700 dashboard account handed to the daemon
+2026-11-24T21:39:52+0700 daemon started
+2026-11-24T21:39:55+0700 daemon ready
+2026-11-24T21:39:55+0700 dashboard account taken out of .env
+2026-11-24T21:42:31+0700 server started
+2026-11-24T21:42:32+0700 daemon started
+2026-11-24T21:42:34+0700 daemon ready
+2026-11-24T21:52:38+0700 daemon exited with 0, restarting in 2s
+2026-11-24T21:52:40+0700 daemon started
+2026-11-24T21:52:43+0700 daemon ready
