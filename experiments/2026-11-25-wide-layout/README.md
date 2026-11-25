@@ -17,7 +17,7 @@ columns from 960 dp) without anything cut, overlapping or scrolling sideways, an
 | Note 12 sideways, 440 dpi | 873 dp | the sidebar, one column |
 | Note 12 sideways, `wm density 300` | 1280 dp | the sidebar, two columns |
 | Note 12 portrait, `wm density 300` | 576 dp | phone, the bottom bar |
-| Google TV Streamer, 1920 × 1080 | see below | see below |
+| Google TV Streamer, 1920 × 1080 at 320 dpi | 960 dp (540 dp tall) | the sidebar, two columns |
 
 The unit tests cover every width in `spec/fixtures/layout.json` (360 to 1920) without a screen.
 
@@ -49,11 +49,34 @@ and focus follows to its item.
 
 To wake the phone that night, HyperOS's pocket mode (its proximity sensor covered) had to be left with Volume Up, once.
 Rotation and density were put back as they were (auto-rotate on, 440 dpi), and Home Dev's own Nouride was left running.
+After the TV's fixes the final build was checked on the phone again: portrait as main, sideways as before.
 
-## Google TV Streamer
+## Google TV Streamer (Android TV 14)
 
-Not reached yet: its wireless debugging did not answer on 2026-11-25 at 01:45 (both open ports closed the ADB
-handshake). The owner was asked to switch it on again.
+Reached at 07:38, once its wireless debugging was on again, at a new address (DHCP had moved it). The release app
+(`tech.nouverse.nouride.home` 0.2.2, the owner's Nouride) was left alone: not opened, updated or stopped; its Nouride
+answered on its port at the end. Home Dev was installed beside it (no Play Protect question this time), never asked to
+run Nouride on the TV, and uninstalled at the end.
+
+**The first question** stands alone in the middle, no sidebar, the card 600 dp wide, within the 540 dp height
+(`evidence/pictures/streamer-first-question.png`). **Another computer**: a throwaway Nouride on the dev box behind a
+quick tunnel, its address typed with the TV's keyboard. Home then showed **the sidebar and two columns**, as at 960 dp
+it should (`evidence/pictures/streamer-960dp-*.png`, the address and its code blurred): Home's card alone in the middle
+(on a TV no update or battery line stands beside it), Connect's code beside the address, Versions' one card (Nouride's
+own is not shown for another computer), Settings at 720 dp, Technical Logs filling the page.
+
+The first build on the TV showed four faults, all fixed with tests before the merge:
+
+| Seen on the TV | Fix |
+| --- | --- |
+| Home's card ran past the bottom of the 540 dp screen | the cat 150 dp on a wide screen (220 on a phone) |
+| Down from Connect's last button went to Technical Logs in the sidebar; Down from Settings stopped, as Android's search preferred a button in the page | Up and Down look only on their own side (`SidebarFocus`) |
+| Opening Technical Logs moved the remote's focus into the log | the log scrolls to its end without `fullScroll` |
+| Back opened Home but left the remote on Versions' item | the remote follows to the open section |
+
+After them, the D-pad walk (`evidence/dpad-streamer.txt`): focus starts on the open section; Down along the sidebar
+reaches Technical Logs and stops; Right enters the page; Left comes back to the open section; Back opens Home, then
+leaves the app. The ring follows the pill's corners.
 
 ## What was not tested
 
@@ -66,5 +89,5 @@ handshake). The owner was asked to switch it on again.
 
 - `evidence/pictures/`: the app's own screens, the status bar cut off, at half size.
 - `evidence/portrait-compare.txt`, `evidence/compare.py`: the portrait comparison against `main`.
-- `evidence/dpad-note12.txt`, `evidence/focus.sh`: the D-pad walk.
+- `evidence/dpad-note12.txt`, `evidence/dpad-streamer.txt`, `evidence/focus.sh`: the D-pad walks.
 - `evidence/shots.sh`, `evidence/round.sh`, `evidence/versions-shot.sh`: how the screens were shot.

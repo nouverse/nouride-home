@@ -20,3 +20,11 @@ main's shot: round.sh's Back key (to leave HyperOS's battery page) took that run
 of the branch was identical to main on Home with no ring (above).
 Technical Logs: its back bar and its Copy and Share are pixel-identical; the cards' contents (the state, the log) are
 Nouride's of the moment and differ, so only its frame was compared.
+
+Once more after the TV's fixes (the cat's size on wide screens, focus, the log's scroll), 2026-11-25 07:59.
+home (running): (1080, 2400) (1080, 2400) (121, 302, 959, 1845)
+connect (running): (1080, 2400) (1080, 2400) (34, 2027, 390, 2213)
+more (running): (1080, 2400) (1080, 2400) (34, 2027, 390, 2213)
+Home: the update card now names Nouride 0.8.47 (released overnight; main's shot said 0.8.46) and main's shot carries
+the focus ring on Open Nouride. Connect and More: main's shots carry a focus ring on the bar's Home (key mode in that
+run). Looked at side by side, nothing else moves.

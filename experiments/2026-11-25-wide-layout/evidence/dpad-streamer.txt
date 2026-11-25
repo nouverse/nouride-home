@@ -1,0 +1,34 @@
+Google TV Streamer, 960 x 540 dp, Nouride Home Dev on another computer (a throwaway Nouride behind a quick tunnel),
+Home open, 2026-11-25 07:5x. focus.sh, as on the Note 12, with the final build.
+
+DPAD_DOWN -> LinearLayout 'Connect' [20,232][436,328]
+DPAD_CENTER -> LinearLayout 'Connect' [20,232][436,328]
+DPAD_RIGHT -> Button 'Copy' [1126,599][1459,695]
+DPAD_RIGHT -> Button 'Share address' [1483,590][1816,702]
+DPAD_DOWN -> Button 'Share address' [1483,590][1816,702]
+DPAD_LEFT -> Button 'Copy' [1126,599][1459,695]
+DPAD_LEFT -> LinearLayout 'Connect' [20,232][436,328]
+DPAD_DOWN -> LinearLayout 'Versions and updates' [20,332][436,428]
+DPAD_DOWN -> LinearLayout 'Settings' [20,432][436,528]
+DPAD_DOWN -> LinearLayout 'Technical Logs' [20,964][436,1060]
+DPAD_DOWN -> LinearLayout 'Technical Logs' [20,964][436,1060]
+DPAD_CENTER -> LinearLayout 'Technical Logs' [20,964][436,1060]
+DPAD_UP -> LinearLayout 'Settings' [20,432][436,528]
+DPAD_UP -> LinearLayout 'Versions and updates' [20,332][436,428]
+DPAD_CENTER -> LinearLayout 'Versions and updates' [20,332][436,428]
+DPAD_RIGHT -> Button 'Check for updates' [629,351][1749,447]
+DPAD_DOWN -> Button 'Check for updates' [629,351][1749,447]
+DPAD_LEFT -> LinearLayout 'Versions and updates' [20,332][436,428]
+BACK -> LinearLayout 'Home' [20,132][436,228]
+DPAD_DOWN -> LinearLayout 'Connect' [20,232][436,328]
+DPAD_DOWN -> LinearLayout 'Versions and updates' [20,332][436,428]
+DPAD_CENTER -> LinearLayout 'Versions and updates' [20,332][436,428]
+DPAD_RIGHT -> Button 'Check for updates' [629,351][1749,447]
+BACK -> LinearLayout 'Home' [20,132][436,228]
+
+Read: Down along the sidebar reaches Technical Logs and stops there; Right enters the page; Down from Connect's last
+button stays in the page; Left goes back to the open section; Back opens Home, the remote on its item.
+
+Before the fixes (the first build on the TV): Down from Share address went to Technical Logs; Down from Settings
+stopped (Android's search preferred a button in the page); opening Technical Logs moved focus into its log
+(fullScroll); Back opened Home but left the remote on Versions' item.
