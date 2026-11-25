@@ -4,6 +4,7 @@ import android.app.Activity
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.view.View
 import android.webkit.WebView
 import android.widget.ScrollView
@@ -38,6 +39,13 @@ object FocusRing {
   private fun ring(ui: Ui, view: View): Drawable = GradientDrawable().apply {
     setColor(Color.TRANSPARENT)
     setStroke(ui.dp(3), ui.color(R.color.place))
-    cornerRadius = (view.background as? GradientDrawable)?.cornerRadius?.takeIf { it > 0f } ?: ui.dp(16).toFloat()
+    cornerRadius = shape(view.background)?.cornerRadius?.takeIf { it > 0f } ?: ui.dp(16).toFloat()
+  }
+
+  /** The view's own shape: its background, or what a ripple draws over (the sidebar's pill). */
+  private fun shape(background: Drawable?): GradientDrawable? = when (background) {
+    is GradientDrawable -> background
+    is RippleDrawable -> (0 until background.numberOfLayers).map(background::getDrawable).filterIsInstance<GradientDrawable>().firstOrNull()
+    else -> null
   }
 }

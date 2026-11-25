@@ -27,10 +27,14 @@ import tech.nouverse.nouride.android.update.Updates
  * given, and on Xiaomi's phones the Autostart switch), the appearance, Versions and updates (this app's and Nouride's,
  * on a screen of their own), turning Nouride off, and Technical Logs for whoever helps. Turning off lives here so it is
  * never pressed by mistake on Home.
+ *
+ * On a wide screen ([shape]) it is the sidebar's Settings, as the desktop's: the same cards at Settings' readable
+ * width, with Versions and updates and Technical Logs in the sidebar rather than as rows here (`spec/layout.md`).
  */
 internal class MoreTab(
   private val activity: Activity,
   private val ui: Ui,
+  shape: Shape,
   private val onTurnOff: () -> Unit,
   private val onChoose: (Where) -> Unit,
   private val onChangeAddress: () -> Unit,
@@ -60,11 +64,8 @@ internal class MoreTab(
   val view: ScrollView
 
   init {
-    val column = LinearLayout(activity).apply {
-      orientation = LinearLayout.VERTICAL
-      setPadding(ui.dp(20), ui.dp(16), ui.dp(20), ui.dp(24))
-    }
-    column.addView(ui.header(R.string.tab_more))
+    val column = ui.column(shape)
+    column.addView(if (shape.sidebar) ui.pageTitle(R.string.settings_title) else ui.header(R.string.tab_more))
 
     column.addView(ui.card().apply {
       addView(ui.text(17f, R.color.ink, bold = true).apply { setText(R.string.place_title) })
@@ -109,20 +110,24 @@ internal class MoreTab(
       addView(appearance(), ui.fullWidth(12))
     }, ui.fullWidth(12))
 
-    column.addView(ui.card(padding = 18).apply {
-      isClickable = true
-      setOnClickListener { activity.startActivity(Intent(activity, VersionsActivity::class.java)) }
-      addView(ui.text(16f, R.color.ink).apply { setText(R.string.versions_row) })
-      addView(versions, ui.fullWidth(2))
-    }, ui.fullWidth(12))
+    if (!shape.sidebar) {
+      column.addView(ui.card(padding = 18).apply {
+        isClickable = true
+        setOnClickListener { activity.startActivity(Intent(activity, VersionsActivity::class.java)) }
+        addView(ui.text(16f, R.color.ink).apply { setText(R.string.versions_row) })
+        addView(versions, ui.fullWidth(2))
+      }, ui.fullWidth(12))
+    }
 
     column.addView(turnOff, ui.fullWidth(16))
-    column.addView(ui.card(padding = 18).apply {
-      isClickable = true
-      setOnClickListener { activity.startActivity(Intent(activity, SupportActivity::class.java)) }
-      addView(ui.text(16f, R.color.ink).apply { setText(R.string.details) })
-    }, ui.fullWidth(8))
-    view = ScrollView(activity).apply { addView(column) }
+    if (!shape.sidebar) {
+      column.addView(ui.card(padding = 18).apply {
+        isClickable = true
+        setOnClickListener { activity.startActivity(Intent(activity, SupportActivity::class.java)) }
+        addView(ui.text(16f, R.color.ink).apply { setText(R.string.details) })
+      }, ui.fullWidth(8))
+    }
+    view = ui.scroll(column, shape, Sections.SETTINGS_READABLE_DP)
   }
 
   /** A row of choices on one soft track, as Appearance draws its own. */

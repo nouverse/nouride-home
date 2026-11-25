@@ -3,7 +3,8 @@
 Nouride Home is two apps, Android (Kotlin, `apps/android`) and desktop (Rust and React, `apps/desktop`, `crates/`),
 that do some of the same things. Where they do, the behaviour is written down here once, a short page each, and its
 cases are in `fixtures/` as JSON that both test suites read: the Android unit tests (`apps/android/app/src/test/kotlin/tech/nouverse/nouride/android/spec/`, given
-this folder by Gradle as `nouride.spec`) and the crates' Rust tests (`crates/*/tests/spec_*.rs`). A case changed
+this folder by Gradle as `nouride.spec`) and the crates' Rust tests (`crates/*/tests/spec_*.rs`), or the desktop's Bun
+tests (`apps/desktop/tests/`) for what only its screens decide. A case changed
 here is checked against both apps on the next test run.
 
 | Page | Fixture | Android | Desktop |
@@ -13,6 +14,7 @@ here is checked against both apps on the next test run.
 | [update-feed.md](update-feed.md) | `fixtures/versions.json` | `update/UpdateFeed.kt` | `crates/shared/src/version.rs` |
 | [downloads.md](downloads.md) | `fixtures/downloads.json` | `download/Downloads.kt` | `crates/downloads` |
 | [device-sign-in.md](device-sign-in.md) | `fixtures/device-sign-in.json` | `signin/DeviceSignIn.kt` | `crates/daemon/src/device_sign_in.rs` |
+| [layout.md](layout.md) | `fixtures/layout.json` | `ui/Sections.kt` | `apps/desktop/src/commons/lib/sections.ts` (its test, `apps/desktop/tests/layout.test.ts`, as the screens are TypeScript) |
 
 ## Reading a case
 

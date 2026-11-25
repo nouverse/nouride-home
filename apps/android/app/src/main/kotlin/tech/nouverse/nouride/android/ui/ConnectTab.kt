@@ -30,17 +30,18 @@ import tech.nouverse.nouride.android.server.Where
  * address large to type or share, and how to sign in there. Before Nouride is running, or off Wi-Fi, the cat says so
  * instead: an address that leads nowhere is not shown. A switch on top keeps Nouride to this phone (`NetworkAccess`),
  * for a Wi-Fi the person does not trust; it is on, as installed.
+ *
+ * On a wide screen ([shape]) it is the sidebar's Connect, and from 960 dp the code stands on the left with the switch
+ * over the address beside it, as the desktop's Connect (`spec/layout.md`).
  */
-internal class ConnectTab(private val activity: Activity, private val ui: Ui, private val onGoHome: () -> Unit) {
-  private val column = LinearLayout(activity).apply {
-    orientation = LinearLayout.VERTICAL
-    setPadding(ui.dp(20), ui.dp(16), ui.dp(20), ui.dp(24))
-  }
+internal class ConnectTab(private val activity: Activity, private val ui: Ui, private val shape: Shape, private val onGoHome: () -> Unit) {
+  private val column = ui.column(shape)
+  private val twoColumns = shape == Shape.TWO_COLUMNS
   private val layout = Layout(activity)
   private var shown: Triple<Reach, String?, Boolean?>? = null
   private var shownRemote: String? = null
 
-  val view: ScrollView = ScrollView(activity).apply { addView(column) }
+  val view: ScrollView = ui.scroll(column, shape)
 
   /** Rebuilt only when what it offers changed: the Wi-Fi's address can change while the tab is open. */
   fun render(look: Look, where: Where?, address: String?) {
@@ -58,15 +59,26 @@ internal class ConnectTab(private val activity: Activity, private val ui: Ui, pr
     if (shown == Triple(reach, address, open)) return
     shown = Triple(reach, address, open)
     column.removeAllViews()
-    column.addView(ui.header(R.string.tab_connect))
-    if (open != null) column.addView(access(open), ui.fullWidth(16))
-    when (reach) {
-      Reach.OFF -> column.addView(notYet(R.drawable.mascot_hello, R.string.connect_off_title, R.string.connect_off_body, home = true), ui.fullWidth(16))
-      Reach.THIS_PHONE -> column.addView(notYet(R.drawable.mascot_hello, R.string.this_phone_title, R.string.this_phone_body, home = false), ui.fullWidth(16))
-      Reach.NO_WIFI -> column.addView(notYet(R.drawable.mascot_unplugged, R.string.no_wifi_title, R.string.no_wifi, home = false), ui.fullWidth(16))
-      Reach.READY -> ready(address!!)
+    column.addView(ui.top(shape, R.string.tab_connect))
+    val access = open?.let(::access)
+    if (reach == Reach.READY) return ready(address!!, access = access)
+    val card = when (reach) {
+      Reach.OFF -> notYet(R.drawable.mascot_hello, R.string.connect_off_title, R.string.connect_off_body, home = true)
+      Reach.THIS_PHONE -> notYet(R.drawable.mascot_hello, R.string.this_phone_title, R.string.this_phone_body, home = false)
+      else -> notYet(R.drawable.mascot_unplugged, R.string.no_wifi_title, R.string.no_wifi, home = false)
     }
+    if (twoColumns) {
+      // The switch beside the cat; before Nouride is installed there is none, and the cat stands alone.
+      val side = Columns.stack(activity).apply { if (access != null) addView(access, ui.fullWidth()) }
+      column.addView(columns(card, side), ui.fullWidth(16))
+      return
+    }
+    if (access != null) column.addView(access, ui.fullWidth(16))
+    column.addView(card, ui.fullWidth(16))
   }
+
+  private fun columns(main: View, side: LinearLayout, firstWeight: Float = 0.5f) =
+    Columns(activity, main, side, firstWeight, gapPx = ui.dp(20), aloneMaxPx = ui.dp(600))
 
   /**
    * Nouride on another computer: the same code and address as this phone's own, for that computer's address. No
@@ -76,7 +88,7 @@ internal class ConnectTab(private val activity: Activity, private val ui: Ui, pr
     if (shownRemote == address) return
     shownRemote = address
     column.removeAllViews()
-    column.addView(ui.header(R.string.tab_connect))
+    column.addView(ui.top(shape, R.string.tab_connect))
     ready(address, RemoteHost.shown(address), R.string.remote_connect_title, R.string.remote_connect_body, R.string.remote_connect_sign_in)
   }
 
@@ -111,53 +123,83 @@ internal class ConnectTab(private val activity: Activity, private val ui: Ui, pr
       addView(ImageView(activity).apply {
         setImageResource(image)
         adjustViewBounds = true
-      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(160)))
+      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(if (shape.sidebar) 120 else 160)))
       addView(ui.text(20f, R.color.ink, bold = true, center = true).apply { setText(heading) }, ui.fullWidth(16))
       addView(ui.text(15f, R.color.muted, center = true).apply { setText(sentence) }, ui.fullWidth(6))
       if (home) addView(ui.primary { onGoHome() }.apply { setText(R.string.go_home) }, ui.fullWidth(20))
     }
 
-  /** The code, the address as a person reads it ([shown]), Copy and Share, and how to sign in there. */
+  /**
+   * The code, the address as a person reads it ([shown]), Copy and Share, and how to sign in there, under the switch
+   * ([access]) on a phone. In two columns the code stands alone on the left and the rest beside it.
+   */
   private fun ready(
     address: String,
     shown: String = address,
     heading: Int = R.string.connect_ready_title,
     sentence: Int = R.string.connect_ready_body,
     signIn: Int = R.string.connect_sign_in_body,
+    access: View? = null,
   ) {
-    val card = ui.card(padding = 24).apply { gravity = Gravity.CENTER_HORIZONTAL }
-    card.addView(ui.text(20f, R.color.ink, bold = true, center = true).apply { setText(heading) })
-    card.addView(ui.text(15f, R.color.muted, center = true).apply { setText(sentence) }, ui.fullWidth(6))
-    // Dark on white in the dark theme too: a camera reads a code by its contrast.
-    card.addView(ImageView(activity).apply {
-      setImageDrawable(BitmapDrawable(activity.resources, qr(address)).apply { isFilterBitmap = false })
-      background = ui.rounded(Color.WHITE, 20)
-      setPadding(ui.dp(12), ui.dp(12), ui.dp(12), ui.dp(12))
-      contentDescription = activity.getString(R.string.connect_qr_description)
-    }, LinearLayout.LayoutParams(ui.dp(232), ui.dp(232)).apply { topMargin = ui.dp(18) })
-    card.addView(ui.text(22f, R.color.brand_text, bold = true, center = true).apply {
-      // An address is an identifier: DM Mono, as the dashboard sets one.
-      typeface = Fonts.typeface(context, Type.MONO)
-      text = shown
-      setTextIsSelectable(true)
-      // One line for the phone's own address; a tunnel's long name takes a second line rather than lose its end.
-      maxLines = 2
-      if (Build.VERSION.SDK_INT >= 26) setAutoSizeTextTypeUniformWithConfiguration(14, 22, 1, TypedValue.COMPLEX_UNIT_SP)
-      background = ui.rounded(ui.color(R.color.brand_soft), 20)
-      setPadding(ui.dp(12), ui.dp(14), ui.dp(12), ui.dp(14))
-    }, ui.fullWidth(18))
-    card.addView(LinearLayout(activity).apply {
-      orientation = LinearLayout.HORIZONTAL
-      addView(ui.secondary { copy(address) }.apply { setText(R.string.copy) }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-      addView(View(activity), LinearLayout.LayoutParams(ui.dp(12), 1))
-      addView(ui.primary { share(address) }.apply { setText(R.string.share_address) }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-    }, ui.fullWidth(16))
-    column.addView(card, ui.fullWidth(16))
-
-    column.addView(ui.card().apply {
+    val words = ui.card(padding = 24).apply { gravity = Gravity.CENTER_HORIZONTAL }
+    words.addView(ui.text(20f, R.color.ink, bold = true, center = true).apply { setText(heading) })
+    words.addView(ui.text(15f, R.color.muted, center = true).apply { setText(sentence) }, ui.fullWidth(6))
+    val code = qrView(address, if (twoColumns) 208 else 232)
+    val pill = addressPill(shown)
+    val buttons = shareButtons(address)
+    val signInCard = ui.card().apply {
       addView(ui.text(17f, R.color.ink, bold = true).apply { setText(R.string.connect_sign_in_title) })
       addView(ui.text(15f, R.color.muted).apply { setText(signIn) }, ui.fullWidth(6))
-    }, ui.fullWidth(12))
+    }
+    if (twoColumns) {
+      val codeCard = ui.card(padding = 16).apply {
+        gravity = Gravity.CENTER_HORIZONTAL
+        addView(code, LinearLayout.LayoutParams(ui.dp(208), ui.dp(208)))
+      }
+      words.addView(pill, ui.fullWidth(18))
+      words.addView(buttons, ui.fullWidth(16))
+      val side = Columns.stack(activity).apply {
+        if (access != null) addView(access, ui.fullWidth().apply { bottomMargin = ui.dp(16) })
+        addView(words, ui.fullWidth())
+        addView(signInCard, ui.fullWidth(12))
+      }
+      column.addView(columns(codeCard, side, firstWeight = 0.4f), ui.fullWidth(16))
+      return
+    }
+    if (access != null) column.addView(access, ui.fullWidth(16))
+    words.addView(code, LinearLayout.LayoutParams(ui.dp(232), ui.dp(232)).apply { topMargin = ui.dp(18) })
+    words.addView(pill, ui.fullWidth(18))
+    words.addView(buttons, ui.fullWidth(16))
+    column.addView(words, ui.fullWidth(16))
+    column.addView(signInCard, ui.fullWidth(12))
+  }
+
+  /** Dark on white in the dark theme too: a camera reads a code by its contrast. */
+  private fun qrView(address: String, sizeDp: Int): View = ImageView(activity).apply {
+    setImageDrawable(BitmapDrawable(activity.resources, qr(address)).apply { isFilterBitmap = false })
+    background = ui.rounded(Color.WHITE, 20)
+    val inset = ui.dp(12 * sizeDp / 232)
+    setPadding(inset, inset, inset, inset)
+    contentDescription = activity.getString(R.string.connect_qr_description)
+  }
+
+  /** An address is an identifier: DM Mono, as the dashboard sets one. */
+  private fun addressPill(shown: String): View = ui.text(22f, R.color.brand_text, bold = true, center = true).apply {
+    typeface = Fonts.typeface(context, Type.MONO)
+    text = shown
+    setTextIsSelectable(true)
+    // One line for the phone's own address; a tunnel's long name takes a second line rather than lose its end.
+    maxLines = 2
+    if (Build.VERSION.SDK_INT >= 26) setAutoSizeTextTypeUniformWithConfiguration(14, 22, 1, TypedValue.COMPLEX_UNIT_SP)
+    background = ui.rounded(ui.color(R.color.brand_soft), 20)
+    setPadding(ui.dp(12), ui.dp(14), ui.dp(12), ui.dp(14))
+  }
+
+  private fun shareButtons(address: String): View = LinearLayout(activity).apply {
+    orientation = LinearLayout.HORIZONTAL
+    addView(ui.secondary { copy(address) }.apply { setText(R.string.copy) }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+    addView(View(activity), LinearLayout.LayoutParams(ui.dp(12), 1))
+    addView(ui.primary { share(address) }.apply { setText(R.string.share_address) }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
   }
 
   /** The code with its four-module quiet zone, a few pixels a module: the view scales it without smoothing. */

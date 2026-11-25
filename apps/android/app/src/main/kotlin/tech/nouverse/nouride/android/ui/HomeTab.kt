@@ -26,10 +26,15 @@ import tech.nouverse.nouride.android.server.Where
  * whether this phone should run Nouride, or open a Nouride that already runs on another computer (`server/Place`).
  * Answered "another computer", the same card says how that computer's Nouride is (`StatusLook.remote`) and where it is,
  * with the same one button. Changing the answer is on More, as it is rarely done.
+ *
+ * On a wide screen ([shape], `spec/layout.md`) the page is the sidebar's Home: its name on top, and from 960 dp the
+ * state card with what stands beside it (the updates, the battery line) in a second column. Before the first question
+ * is answered and while the first setup runs there is no sidebar, and the card stands alone in the middle ([alone]).
  */
 internal class HomeTab(
   private val context: Context,
   private val ui: Ui,
+  private val shape: Shape,
   update: UpdateCard,
   nourideUpdate: NourideUpdateCard,
   private val onPrimary: () -> Unit,
@@ -48,7 +53,7 @@ internal class HomeTab(
   private val stepPercent: TextView = ui.text(13f, R.color.good, bold = true)
   private val primary: Button = ui.primary { onPrimary() }
   private val battery: TextView = ui.text(15f, R.color.ink).apply {
-    setText(R.string.home_battery_banner)
+    setText(if (shape.sidebar) R.string.home_battery_banner_settings else R.string.home_battery_banner)
     background = ui.rounded(ui.color(R.color.warn_soft), 20)
     setPadding(ui.dp(16), ui.dp(14), ui.dp(16), ui.dp(14))
     isClickable = true
@@ -68,7 +73,7 @@ internal class HomeTab(
    */
   private val choose: LinearLayout = ui.card(padding = 24).apply {
     gravity = Gravity.CENTER_HORIZONTAL
-    addView(chooseMascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(180)))
+    addView(chooseMascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(if (shape.sidebar) 150 else 180)))
     addView(chooseTitle, ui.fullWidth(16))
     addView(chooseBody, ui.fullWidth(8))
     addView(runHere, ui.fullWidth(22))
@@ -88,17 +93,15 @@ internal class HomeTab(
   private var bob: ObjectAnimator? = null
   private var shownMascot: Mascot? = null
 
+  private val top: View = if (shape.sidebar) ui.pageTitle(R.string.tab_home) else ui.header(R.string.app_name)
+
   val view: ScrollView
 
   init {
-    val column = LinearLayout(context).apply {
-      orientation = LinearLayout.VERTICAL
-      setPadding(ui.dp(20), ui.dp(16), ui.dp(20), ui.dp(24))
-    }
-    column.addView(ui.header(R.string.app_name))
-    column.addView(update.view, ui.fullWidth(12))
-    column.addView(nourideUpdate.view, ui.fullWidth(12))
-    hero.addView(mascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(220)))
+    val column = ui.column(shape)
+    column.addView(top)
+    // A wide screen is often short (a TV is 540 dp tall): the cat smaller there, so the card and its button fit.
+    hero.addView(mascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(if (shape.sidebar) 150 else 220)))
     hero.addView(title, ui.fullWidth(16))
     hero.addView(body, ui.fullWidth(8))
     hero.addView(remoteAddress, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
@@ -115,10 +118,38 @@ internal class HomeTab(
     }, ui.fullWidth(4))
     hero.addView(stepBox, ui.fullWidth(10))
     hero.addView(primary, ui.fullWidth(20))
-    column.addView(choose, ui.fullWidth(12))
-    column.addView(hero, ui.fullWidth(12))
-    column.addView(battery, ui.fullWidth(12))
-    view = ScrollView(context).apply { addView(column) }
+    if (shape == Shape.TWO_COLUMNS) {
+      val main = Columns.stack(context).apply {
+        addView(choose, ui.fullWidth())
+        addView(hero, ui.fullWidth())
+      }
+      val side = Columns.stack(context).apply {
+        // Spaced below each, so the first one shown lines up with the state card's top.
+        addView(update.view, ui.fullWidth().apply { bottomMargin = ui.dp(12) })
+        addView(nourideUpdate.view, ui.fullWidth().apply { bottomMargin = ui.dp(12) })
+        addView(battery, ui.fullWidth())
+      }
+      column.addView(Columns(context, main, side, firstWeight = 0.535f, gapPx = ui.dp(20), aloneMaxPx = ui.dp(ALONE_DP)), ui.fullWidth(16))
+    } else {
+      column.addView(update.view, ui.fullWidth(12))
+      column.addView(nourideUpdate.view, ui.fullWidth(12))
+      column.addView(choose, ui.fullWidth(12))
+      column.addView(hero, ui.fullWidth(12))
+      column.addView(battery, ui.fullWidth(12))
+    }
+    view = ui.scroll(column, shape)
+  }
+
+  /**
+   * On a wide screen with no sidebar (the first question, the first setup): no page name, and the card in the middle
+   * of the screen, no wider than a phone's column would make it comfortable to read.
+   */
+  fun alone(on: Boolean) {
+    if (!shape.sidebar) return
+    top.visibility = if (on) View.GONE else View.VISIBLE
+    val readable = view.getChildAt(0) as Readable
+    readable.centred = on
+    readable.maxPx = ui.dp(if (on && shape == Shape.SIDEBAR) ALONE_DP else Sections.READABLE_DP)
   }
 
   /**
@@ -164,6 +195,11 @@ internal class HomeTab(
     val label = look.action.label()
     primary.visibility = if (label == null) View.GONE else View.VISIBLE
     if (label != null) primary.setText(label)
+  }
+
+  private companion object {
+    /** The widest the state card stands on its own on a wide screen. */
+    const val ALONE_DP = 600
   }
 
   /** The cat floats a little while something is happening, and stands still when it is done. */

@@ -12,7 +12,8 @@ learn. If a screen needs one of those words to make sense, the screen is wrong, 
 The two apps ask the same questions, in the same states, with the same sentences and the same cat. Each one's screens
 are in `references/`: read the page of the app you change, and the other one's when you change something both show.
 
-- `references/android.md`: the phone. Three tabs (Home, Connect, More), the address card, the notification, battery
+- `references/android.md`: the phone. Three tabs (Home, Connect, More), or the desktop's sidebar on a wide screen (a
+  tablet, a TV, a phone turned sideways), the address card, the notification, battery
   guidance, Xiaomi's Autostart.
 - `references/desktop.md`: the computer. A window with a sidebar (Home, Connect, Versions and updates, Settings,
   Technical Logs), its sizes, the menu bar, the dashboard's window.

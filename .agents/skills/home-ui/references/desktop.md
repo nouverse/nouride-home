@@ -50,7 +50,9 @@ surface down the left: the cat on its disc and "Nouride Home" at the top (with a
 siblings: none opens "inside" another, so there is no Back between them. The open one sits in the soft lavender pill; a
 dot on Versions and updates says an update waits there. Cmd+1 to Cmd+5 open them in that order (Ctrl on Linux).
 
-**Responsive**, from the window's width and the content's (`@container` on each page, Tailwind's container variants):
+**Responsive**, from the window's width and the content's (`@container` on each page, Tailwind's container variants).
+The breakpoints and the sections are shared with the Android app's wide screens: `spec/layout.md`, its cases read by
+`apps/desktop/tests/layout.test.ts`.
 
 | Window | Sidebar | Content |
 | --- | --- | --- |

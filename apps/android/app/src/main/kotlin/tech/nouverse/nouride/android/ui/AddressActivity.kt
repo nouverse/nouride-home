@@ -102,7 +102,9 @@ class AddressActivity : Activity() {
     card.addView(problem, ui.fullWidth(8))
     if (stopsHere) {
       card.addView(ui.text(14f, R.color.ink).apply {
-        setText(R.string.where_stops_here)
+        // Where the switch back is: More on a phone, Settings in a wide screen's sidebar.
+        val wide = Sections.shape(resources.configuration.screenWidthDp).sidebar
+        setText(if (wide) R.string.where_stops_here_settings else R.string.where_stops_here)
         background = ui.rounded(ui.color(R.color.warn_soft), 16)
         setPadding(ui.dp(14), ui.dp(12), ui.dp(14), ui.dp(12))
       }, ui.fullWidth(14))
