@@ -123,7 +123,7 @@ internal class ConnectTab(private val activity: Activity, private val ui: Ui, pr
       addView(ImageView(activity).apply {
         setImageResource(image)
         adjustViewBounds = true
-      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(160)))
+      }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(if (shape.sidebar) 120 else 160)))
       addView(ui.text(20f, R.color.ink, bold = true, center = true).apply { setText(heading) }, ui.fullWidth(16))
       addView(ui.text(15f, R.color.muted, center = true).apply { setText(sentence) }, ui.fullWidth(6))
       if (home) addView(ui.primary { onGoHome() }.apply { setText(R.string.go_home) }, ui.fullWidth(20))

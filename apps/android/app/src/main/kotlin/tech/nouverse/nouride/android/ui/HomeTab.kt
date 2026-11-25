@@ -73,7 +73,7 @@ internal class HomeTab(
    */
   private val choose: LinearLayout = ui.card(padding = 24).apply {
     gravity = Gravity.CENTER_HORIZONTAL
-    addView(chooseMascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(180)))
+    addView(chooseMascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(if (shape.sidebar) 150 else 180)))
     addView(chooseTitle, ui.fullWidth(16))
     addView(chooseBody, ui.fullWidth(8))
     addView(runHere, ui.fullWidth(22))
@@ -100,7 +100,8 @@ internal class HomeTab(
   init {
     val column = ui.column(shape)
     column.addView(top)
-    hero.addView(mascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(220)))
+    // A wide screen is often short (a TV is 540 dp tall): the cat smaller there, so the card and its button fit.
+    hero.addView(mascot, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, ui.dp(if (shape.sidebar) 150 else 220)))
     hero.addView(title, ui.fullWidth(16))
     hero.addView(body, ui.fullWidth(8))
     hero.addView(remoteAddress, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {

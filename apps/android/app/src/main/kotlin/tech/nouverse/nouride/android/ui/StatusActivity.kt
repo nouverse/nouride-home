@@ -225,10 +225,11 @@ class StatusActivity : Activity() {
     sidebar?.select(section)
     if (before != section) pageShown(left = before)
     render()
-    // A page's button that opened another section (Go to Home, the battery line) is gone: the remote goes on from the
-    // sidebar, at the section now open.
+    // A page's button that opened another section (Go to Home, the battery line) is gone, or Back opened Home with the
+    // remote on another section's item: it goes on from the sidebar, at the section now open.
     val focused = currentFocus
-    if (focused == null || !focused.isShown) sidebar?.openItem()?.requestFocus()
+    val sidebar = sidebar ?: return
+    if (focused == null || !focused.isShown || sidebar.contains(focused)) sidebar.openItem().requestFocus()
   }
 
   /** The Versions and Technical Logs pages read what they show as they come into view, and stop when they leave it. */

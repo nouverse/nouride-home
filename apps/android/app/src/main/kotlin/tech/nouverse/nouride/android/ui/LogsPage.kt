@@ -95,7 +95,8 @@ internal class LogsPage(private val activity: Activity, private val ui: Ui, wide
     report = SupportText.report(facts, logs)
     summary.text = facts
     log.text = SupportText.report("", logs).trimStart()
-    scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
+    // Scrolled, not `fullScroll`: that also moves focus to the log, and a remote on the sidebar would lose its place.
+    scroll.post { scroll.scrollTo(0, scroll.getChildAt(0).height) }
   }
 
   private fun copy() {

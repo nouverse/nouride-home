@@ -68,9 +68,13 @@ resizing a split screen makes the screen again, and the open section carries ove
   wide screen is often short. From 960 dp: Home's state card with the updates and the battery line beside it; Connect's
   code on the left, the switch over the address beside it; the two version cards side by side. A column with nothing in
   it gives its room to the other, which stands centred (`ui/Columns.kt`).
-- **A remote**: every item is reached with the D-pad and ringed (`FocusRing`). Focus starts on the open section; Left
-  from the page goes back to it, not to whichever item lies nearest; Up and Down stay in the sidebar; Right goes to the
-  page (`SidebarLayout`). Back from any section goes Home, and from Home it leaves the app.
+- **A remote**: every item is reached with the D-pad and ringed (`FocusRing`, in the pill's own corners). Focus starts
+  on the open section; Left from the page goes back to it, not to whichever item lies nearest; Up and Down look only on
+  their own side, the sidebar or the page, and stop at its ends; Right goes to the page (`SidebarLayout`,
+  `SidebarFocus`). Back from any section goes Home, the remote with it, and from Home it leaves the app.
+- **Short screens**: a wide screen is often short (a TV is 540 dp tall, a phone turned sideways about 340 dp), so the
+  cat on Home's card and the first question is drawn smaller there (150 dp, Connect's 120 dp), and the card with its
+  button fits a TV.
 
 ## Home
 

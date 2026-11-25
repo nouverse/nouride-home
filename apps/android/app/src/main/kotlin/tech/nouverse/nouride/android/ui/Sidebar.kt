@@ -2,10 +2,13 @@ package tech.nouverse.nouride.android.ui
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
+import android.view.FocusFinder
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -103,7 +106,7 @@ internal class Sidebar(context: Context, private val ui: Ui, onSelect: (Section)
     for ((each, item) in items) {
       val here = each == section
       // The pill's corners are the ring's too (`FocusRing` reads the background's radius).
-      val fill = if (here) ui.color(R.color.place_soft) else ui.color(R.color.surface)
+      val fill = if (here) ui.color(R.color.place_soft) else Color.TRANSPARENT
       item.root.background = RippleDrawable(ColorStateList.valueOf(ui.color(R.color.place_soft)), ui.rounded(fill, 24), null)
       item.icon.imageTintList = ColorStateList.valueOf(ui.color(if (here) R.color.place else R.color.muted))
       item.label.setTextColor(ui.color(if (here) R.color.place else R.color.muted))
@@ -132,10 +135,10 @@ internal class Sidebar(context: Context, private val ui: Ui, onSelect: (Section)
 
 /**
  * The sidebar beside the page. A remote's Left from the page enters the sidebar at the open section, not at whichever
- * item lies nearest; Up and Down inside the sidebar stay in it rather than fall into the page. Right leaves it for the
- * page's nearest button, as Android finds it.
+ * item lies nearest; Up and Down stay on their side, in the sidebar or in the page. Right leaves the sidebar for the
+ * page's nearest button, as Android finds it ([SidebarFocus]).
  */
-internal class SidebarLayout(context: Context, private val sidebar: Sidebar, line: View, page: View, sidebarWidthPx: Int) :
+internal class SidebarLayout(context: Context, private val sidebar: Sidebar, line: View, private val page: View, sidebarWidthPx: Int) :
   LinearLayout(context) {
   init {
     orientation = HORIZONTAL
@@ -145,13 +148,37 @@ internal class SidebarLayout(context: Context, private val sidebar: Sidebar, lin
   }
 
   override fun focusSearch(focused: View?, direction: Int): View? {
-    val found = super.focusSearch(focused, direction)
-    if (focused == null || sidebar.view.visibility != View.VISIBLE) return found
+    if (focused == null || sidebar.view.visibility != View.VISIBLE) return super.focusSearch(focused, direction)
     val inSidebar = sidebar.contains(focused)
-    return when {
-      !inSidebar && direction == View.FOCUS_LEFT && found != null && sidebar.contains(found) -> sidebar.openItem()
-      inSidebar && (direction == View.FOCUS_UP || direction == View.FOCUS_DOWN) && (found == null || !sidebar.contains(found)) -> focused
+    val vertical = direction == View.FOCUS_UP || direction == View.FOCUS_DOWN
+    if (SidebarFocus.next(inSidebar, direction == View.FOCUS_LEFT, vertical, foundInSidebar = null) == SidebarFocus.OWN_SIDE) {
+      val side = (if (inSidebar) sidebar.view else page) as ViewGroup
+      return FocusFinder.getInstance().findNextFocus(side, focused, direction) ?: focused
+    }
+    val found = super.focusSearch(focused, direction)
+    return when (SidebarFocus.next(inSidebar, direction == View.FOCUS_LEFT, vertical, found?.let(sidebar::contains))) {
+      SidebarFocus.OPEN_SECTION -> sidebar.openItem()
       else -> found
+    }
+  }
+}
+
+/** Where a remote's key goes between the sidebar and the page. Pure, so the rules are tested without a screen. */
+internal enum class SidebarFocus {
+  OPEN_SECTION, OWN_SIDE, AS_FOUND;
+
+  companion object {
+    /**
+     * [fromSidebar]: focus is in the sidebar now. [foundInSidebar]: where Android's own search over the whole screen
+     * would go, in the sidebar (true), in the page (false) or nowhere (null). Up and Down look only on the side focus is
+     * on, and stay at its ends: over the whole screen, Down from a page's last button reached Technical Logs, and Down
+     * from Settings preferred a nearer button in the page to Technical Logs (both on the TV). Left into the sidebar
+     * lands on the open section. Right is Android's own.
+     */
+    fun next(fromSidebar: Boolean, left: Boolean, vertical: Boolean, foundInSidebar: Boolean?): SidebarFocus = when {
+      vertical -> OWN_SIDE
+      !fromSidebar && left && foundInSidebar == true -> OPEN_SECTION
+      else -> AS_FOUND
     }
   }
 }
