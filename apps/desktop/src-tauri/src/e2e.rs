@@ -72,7 +72,32 @@ pub fn handle(handle: &AppHandle, app: &Arc<App>, argv: &[String]) {
         }
         return Ok(json!({ "words": found.words, "buttons": found.buttons }));
       }
+      // The menu bar's question, the system's alert over every window ("Quit Nouride?", "Stop Nouride server?"): its
+      // words and buttons, and with a button's words, a press on it.
+      #[cfg(target_os = "macos")]
+      "alert" => {
+        let press = Some(arg.clone()).filter(|v| !v.is_empty());
+        let found = sheet::alert(&h, press.clone()).ok_or("no alert is up")?;
+        if press.is_some_and(|p| !found.buttons.contains(&p)) {
+          return Err(format!("no such button: {:?}", found.buttons));
+        }
+        return Ok(json!({ "words": found.words, "buttons": found.buttons }));
+      }
       "shot" => return shot(&h, &a, &arg),
+      // As the Dock's Quit and a logout end the app: AppKit's terminate, which Tauri sees only as the app ending. From
+      // the main queue, as AppKit's own events come: inside a Tauri callback, terminate does nothing.
+      #[cfg(target_os = "macos")]
+      "terminate" => {
+        std::thread::spawn(move || {
+          std::thread::sleep(std::time::Duration::from_millis(500));
+          dispatch2::DispatchQueue::main().exec_async(|| {
+            if let Some(mtm) = objc2::MainThreadMarker::new() {
+              objc2_app_kit::NSApplication::sharedApplication(mtm).terminate(None);
+            }
+          });
+        });
+        return Ok(json!("terminating"));
+      }
       // The answer is written first; the app goes a moment later.
       "quit" => {
         let h = h.clone();
@@ -129,12 +154,17 @@ fn dump(handle: &AppHandle, app: &App) -> serde_json::Value {
   let question = sheet::on(handle, windows::dashboard::LABEL, None).map(|s| json!({ "words": s.words, "buttons": s.buttons }));
   #[cfg(not(target_os = "macos"))]
   let question = None::<serde_json::Value>;
+  #[cfg(target_os = "macos")]
+  let alert = sheet::alert(handle, None).map(|s| json!({ "words": s.words, "buttons": s.buttons }));
+  #[cfg(not(target_os = "macos"))]
+  let alert = None::<serde_json::Value>;
   let tray_items: Vec<_> = tray::LAST.lock().unwrap().iter().map(|(id, words, enabled)| json!({ "id": id, "words": words, "enabled": enabled })).collect();
   let state = json!({
     "snapshot": app.snapshot(),
     "tray": tray_items,
     "windows": { "main": window(windows::main::LABEL), "dashboard": window(windows::dashboard::LABEL) },
     "question": question,
+    "alert": alert,
     "agent": { "label": app.build.agent_label, "path": app.agent.path, "installed": service::Supervisor::installed(&app.agent) },
     "login": { "label": app.login.label, "path": app.login.path, "registered": app.login.registered() },
   });
@@ -170,15 +200,16 @@ fn shot(handle: &AppHandle, app: &App, name: &str) -> Result<serde_json::Value, 
   }
 }
 
-/// The question a window carries as a sheet, read from AppKit: WKWebView has no WebDriver and a sheet is not a page.
+/// The question a window carries as a sheet, or the app's alert over every window, read from AppKit: WKWebView has no
+/// WebDriver and neither is a page.
 #[cfg(target_os = "macos")]
 mod sheet {
   use std::sync::mpsc;
   use std::time::Duration;
 
   use objc2::rc::Retained;
-  use objc2::Message;
-  use objc2_app_kit::{NSButton, NSTextField, NSView, NSWindow};
+  use objc2::{MainThreadMarker, Message};
+  use objc2_app_kit::{NSApplication, NSButton, NSTextField, NSView, NSWindow};
   use tauri::{AppHandle, Manager, WebviewWindow};
 
   pub struct Sheet {
@@ -199,11 +230,28 @@ mod sheet {
     rx.recv_timeout(Duration::from_secs(10)).ok().flatten()
   }
 
+  /// The alert the app has up over every window (`NSApp.modalWindow`, while the alert runs modal); with `press`, the
+  /// button that says so is clicked. Never called on the main thread, which does the reading; the main thread answers
+  /// while the alert is up, as the app's own calls to it run in the modal panel's run loop mode too.
+  pub fn alert(handle: &AppHandle, press: Option<String>) -> Option<Sheet> {
+    let (tx, rx) = mpsc::channel();
+    handle
+      .run_on_main_thread(move || {
+        let found = MainThreadMarker::new().and_then(|mtm| NSApplication::sharedApplication(mtm).modalWindow()).and_then(|w| words_of(&w, press.as_deref()));
+        let _ = tx.send(found);
+      })
+      .ok()?;
+    rx.recv_timeout(Duration::from_secs(10)).ok().flatten()
+  }
+
   fn read(window: &WebviewWindow, press: Option<&str>) -> Option<Sheet> {
     let ns = window.ns_window().ok()?;
     // SAFETY: on the main thread, and the pointer is this window's NSWindow, alive while `window` is.
     let ns: &NSWindow = unsafe { &*ns.cast() };
-    let sheet = ns.attachedSheet()?;
+    words_of(&*ns.attachedSheet()?, press)
+  }
+
+  fn words_of(sheet: &NSWindow, press: Option<&str>) -> Option<Sheet> {
     let mut words = Vec::new();
     let mut buttons = Vec::new();
     if let Some(content) = sheet.contentView() {

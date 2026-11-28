@@ -2471,6 +2471,7 @@ name = "nouride-home"
 version = "0.2.2"
 dependencies = [
  "daemon",
+ "dispatch2",
  "downloads",
  "libc",
  "link-policy",

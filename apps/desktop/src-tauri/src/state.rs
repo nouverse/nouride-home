@@ -2,6 +2,7 @@
 //! crate's; this file only gathers what the crates decided. The snapshot's fields mirror `apps/desktop/src/commons/lib/
 //! ipc.ts`: a field is renamed in both or in neither.
 
+use std::sync::atomic::AtomicBool;
 use std::sync::Mutex;
 
 use daemon::phase::{Seen, Tracker};
@@ -63,6 +64,8 @@ pub struct App {
   pub layout: Layout,
   pub agent: LaunchAgent<System>,
   pub login: LoginItem,
+  /// Set when the app starts again to finish its own update: Nouride is left running through it.
+  pub restarting: AtomicBool,
   pub inner: Mutex<Inner>,
 }
 
@@ -79,6 +82,7 @@ impl App {
       layout,
       agent,
       login,
+      restarting: AtomicBool::new(false),
       inner: Mutex::new(Inner {
         tracker: Tracker::default(),
         phase: Phase::Stopped,

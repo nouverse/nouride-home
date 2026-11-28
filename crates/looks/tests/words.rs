@@ -1,7 +1,7 @@
 //! Every key the looks name has its words in `packages/ui-kit/src/words.json`, and every placeholder in them is one
 //! the screens fill: a state cannot ship without its sentence, nor a sentence with a `{…}` left in it.
 
-use looks::{leave, notices, tray, versions, window, Words};
+use looks::{ask, leave, notices, tray, versions, window, Words};
 use serde_json::Value;
 use shared::{Phase, Reply, Where};
 
@@ -74,6 +74,23 @@ fn the_question_before_the_dashboard_closes_has_its_words_and_its_two_answers() 
   }
   assert_ne!(map[leave::GO_BACK], map[leave::STAY]);
   assert!(map[leave::TITLE].as_str().unwrap().ends_with('?'));
+}
+
+#[test]
+fn the_questions_before_nouride_stops_have_their_words_and_two_answers() {
+  let map = words();
+  for q in ask::ALL {
+    for k in [q.title, q.body, q.yes, q.no] {
+      has(&map, k);
+    }
+    assert_ne!(map[q.yes], map[q.no]);
+    assert!(map[q.title].as_str().unwrap().ends_with('?'), "{}", q.title);
+  }
+  assert_eq!(map[ask::QUIT.title], "Quit Nouride?");
+  assert_eq!(map[ask::QUIT.body], "Your agents stop answering until you open Nouride again.");
+  assert_eq!(map[ask::STOP.title], "Stop Nouride server?");
+  assert_eq!(map[ask::STOP.body], "Your agents stop answering until you start it again.");
+  assert_eq!((map[ask::STOP.yes].as_str(), map[ask::STOP.no].as_str()), (Some("Stop"), Some("Cancel")));
 }
 
 #[test]

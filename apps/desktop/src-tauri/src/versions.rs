@@ -246,6 +246,7 @@ pub fn update_app(handle: AppHandle, app: Arc<App>) {
       Ok(()) => {
         set_app(&app, AppStep::Installing, None, 100);
         poller::send(&handle, &app);
+        app.restarting.store(true, std::sync::atomic::Ordering::SeqCst);
         handle.restart();
       }
       Err(e) => {

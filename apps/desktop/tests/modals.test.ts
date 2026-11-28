@@ -23,8 +23,9 @@ test("the only modal is Settings' Turn off confirmation", () => {
 });
 
 // The dashboard's window shows Nouride's page, not the app's, so its one confirmation is a sheet of the system's own,
-// asked from Rust. Found by the function that asks it, as the screens' one is found by its file.
-test("the only native dialog is the question before the dashboard's window closes", () => {
+// asked from Rust; the menu bar has no window, so its two (Quit Nouride?, Stop Nouride server?) are the system's alert,
+// asked by one function. Found by the function that asks, as the screens' one is found by its file.
+test("the only native dialogs are the dashboard's question before it closes and the menu bar's before Nouride stops", () => {
   const rust = join(import.meta.dir, "../src-tauri/src");
   const walk = (dir: string): string[] =>
     readdirSync(dir).flatMap((name) => {
@@ -33,12 +34,12 @@ test("the only native dialog is the question before the dashboard's window close
     });
   const asked = walk(rust).flatMap((path) => {
     const text = readFileSync(path, "utf8");
-    return [...text.matchAll(/\.dialog\(\)/g)].map((found) => {
+    return [...text.matchAll(/\.dialog\(\)|\bNSAlert::new\(/g)].map((found) => {
       const before = [...text.slice(0, found.index).matchAll(/\bfn\s+(\w+)\s*[(<]/g)];
       return `${relative(rust, path)}: ${before.at(-1)?.[1] ?? "?"}`;
     });
   });
-  expect(asked).toEqual(["windows/dashboard.rs: ask_to_leave"]);
+  expect(asked.sort()).toEqual(["questions.rs: alert", "questions.rs: ask", "windows/dashboard.rs: ask_to_leave"]);
 });
 
 test("nothing else covers the window", () => {

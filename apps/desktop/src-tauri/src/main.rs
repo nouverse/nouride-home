@@ -8,6 +8,7 @@ mod commands;
 #[cfg(feature = "dev")]
 mod e2e;
 mod poller;
+mod questions;
 mod setup;
 mod state;
 mod tray;
@@ -126,6 +127,13 @@ fn main() {
         if !looks::window::exits(*code) {
           api.prevent_exit();
         }
+      }
+      // Whatever ends the app stops the Nouride it runs, asked or not: Quit asked already, and stopped it; the Dock's
+      // Quit and a logout end the app through the system and are not asked (`service::rules::stops_on_exit`). Not
+      // when the app starts again to finish its own update: it is back in a moment.
+      if let RunEvent::Exit = event {
+        let app = handle.state::<Arc<App>>().inner().clone();
+        commands::stop_on_exit(&app);
       }
       // The Dock icon clicked with no window shown is Open Nouride.
       #[cfg(target_os = "macos")]

@@ -17,7 +17,7 @@ pub fn main_page(screen: &str) -> String {
 }
 
 /// Whether the app goes when it is asked to. Closing its last window asks with no exit code, and the app stays in the
-/// menu bar (Nouride keeps running either way); Quit (`AppHandle::exit`) asks with one, and the app goes.
+/// menu bar with Nouride running; Quit (`AppHandle::exit`) asks with one, and the app goes, Nouride with it.
 pub fn exits(code: Option<i32>) -> bool {
   code.is_some()
 }

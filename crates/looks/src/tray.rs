@@ -44,6 +44,8 @@ pub const OPEN: &str = "open";
 pub const START: &str = "start";
 pub const STOP: &str = "stop";
 pub const QUIT: &str = "quit";
+/// Quit's words, in the menu bar and in the app's menu at the top of the screen.
+pub const QUIT_WORDS: &str = "tray_quit";
 
 /// The window Open Nouride shows. The same answer for every way the app is opened: the menu bar, the Dock, opening
 /// the app again, the app's start.
@@ -87,7 +89,7 @@ pub fn menu(input: Input) -> Vec<Item> {
       out.push(item(START, "tray_start", true));
     }
   }
-  out.push(item(QUIT, "tray_quit", true));
+  out.push(item(QUIT, QUIT_WORDS, true));
   out
 }
 
