@@ -91,3 +91,41 @@ fn only_the_placeholders_the_screens_fill_are_in_the_words() {
     assert!(rest.is_empty(), "{key}: {text}");
   }
 }
+
+/// Android's words (`res/values/strings.xml`, and the TV's), as name and text, with Android's escaped quotes undone.
+fn android(folder: &str) -> Vec<(String, String)> {
+  let path = format!("{}/../../apps/android/app/src/main/res/{folder}/strings.xml", env!("CARGO_MANIFEST_DIR"));
+  let text = std::fs::read_to_string(&path).expect("Android's strings.xml");
+  text
+    .split("<string name=\"")
+    .skip(1)
+    .map(|rest| {
+      let (name, rest) = rest.split_once("\">").expect("a string's name");
+      let value = rest.split("</string>").next().unwrap_or("").replace("\\'", "'");
+      (name.to_owned(), value)
+    })
+    .collect()
+}
+
+#[test]
+fn both_apps_stop_and_start_the_nouride_server_in_the_same_words_and_quit_says_what_it_quits() {
+  let map = words();
+  let phone: std::collections::HashMap<_, _> = android("values").into_iter().collect();
+  for key in ["stop_server", "stop_title", "stop_body", "stop", "stopping_title", "versions_nouride_off", "dashboard_unreachable_body"] {
+    assert_eq!(map[key].as_str(), phone.get(key).map(String::as_str), "{key}");
+  }
+  assert_eq!(map["stop_server"], "Stop Nouride server");
+  assert_eq!(map["tray_stop"], map["stop_server"]);
+  assert_eq!(map["tray_start"], "Start Nouride server");
+  assert_eq!(map["tray_quit"], "Quit Nouride");
+  for k in ["quit_title", "quit_body", "quit"] {
+    has(&map, k);
+  }
+  let mut all: Vec<(String, String)> = map.iter().filter_map(|(k, v)| Some((k.clone(), v.as_str()?.to_owned()))).collect();
+  all.extend(android("values"));
+  all.extend(android("values-television"));
+  // "Turn off" is the switch for other devices now, never Nouride itself.
+  let old = ["Turn off Nouride", "Turn Nouride off", "Turning Nouride off", "turns off. Its agents", "Quit Nouride Home"];
+  let left: Vec<_> = all.iter().filter(|(_, v)| old.iter().any(|o| v.contains(o)) || v == "Turn off").collect();
+  assert!(left.is_empty(), "{left:?}");
+}

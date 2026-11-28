@@ -22,7 +22,7 @@
   <string name="running_body">Your assistant is ready. You can close this app: Nouride keeps running.</string>
   <string name="restarting_title">Nouride is starting again</string>
   <string name="restarting_body">It stopped for a moment. There is nothing you need to do.</string>
-  <string name="stopping_title">Turning Nouride off</string>
+  <string name="stopping_title">Stopping Nouride server</string>
   <string name="stopping_body">Just a moment.</string>
   <string name="failed_title">Nouride could not start</string>
   <string name="failed_body">Check that the phone is on Wi-Fi, then try again.</string>
@@ -45,9 +45,9 @@
   <string name="battery_body">Your phone may stop Nouride to save battery. Allow it to keep running, even with the screen off.</string>
   <string name="battery_allow">Allow</string>
 
-  <string name="turn_off">Turn off</string>
-  <string name="turn_off_title">Turn Nouride off?</string>
-  <string name="turn_off_body">Your assistant will not answer until you start it again.</string>
+  <string name="stop">Stop</string>
+  <string name="stop_title">Stop Nouride server?</string>
+  <string name="stop_body">Your agents stop answering until you start it again.</string>
   <string name="cancel">Cancel</string>
 
   <string name="details">Technical Logs ›</string>
@@ -87,7 +87,7 @@
   <string name="download_failed">%1$s didn\'t download. Try again.</string>
   <string name="download_no_room">There isn\'t enough room on this phone for %1$s. Free some space, then try again.</string>
   <string name="download_needs_permission">Nouride Home can\'t save files in Downloads without your permission. Try again and allow it.</string>
-  <string name="dashboard_unreachable_body">It may still be starting, or it is turned off. Check Home, then try again.</string>
+  <string name="dashboard_unreachable_body">It may still be starting, or the Nouride server is stopped. Check Home, then try again.</string>
 
   <!-- The bar along the bottom, and its three tabs. -->
   <string name="tab_home">Home</string>
@@ -122,8 +122,8 @@
   <string name="where_address_hint">nouride.example.com</string>
   <string name="where_connect">Connect</string>
   <string name="where_checking">Checking…</string>
-  <string name="where_stops_here">Nouride on this phone turns off. Its agents stop answering until you switch back to this phone in More.</string>
-  <string name="where_stops_here_settings">Nouride on this phone turns off. Its agents stop answering until you switch back to this phone in Settings.</string>
+  <string name="where_stops_here">The Nouride server on this phone stops. Its agents stop answering until you switch back to this phone in More.</string>
+  <string name="where_stops_here_settings">The Nouride server on this phone stops. Its agents stop answering until you switch back to this phone in Settings.</string>
   <string name="where_empty">Type the address first.</string>
   <string name="where_plain_http">Nouride Home only opens addresses that start with https://. Try it with https://.</string>
   <string name="where_not_an_address">That doesn\'t look like an address. It looks like nouride.example.com.</string>
@@ -165,7 +165,7 @@
   <string name="versions_update_to">Update to %1$s</string>
   <string name="versions_install">Install the update</string>
   <string name="versions_downloading">Downloading %1$s… %2$d%%</string>
-  <string name="versions_nouride_off">Turn Nouride on to see its version and check for updates.</string>
+  <string name="versions_nouride_off">Start the Nouride server to see its version and check for updates.</string>
   <string name="versions_nouride_ready">Version %1$s is ready. Your agents, chats and settings stay as they are.</string>
   <string name="versions_nouride_cannot">Nouride can\'t install this update by itself. Try again later.</string>
   <string name="versions_nouride_downloaded">Version %1$s is downloaded and ready to install.</string>
@@ -176,7 +176,7 @@
   <string name="checking">Checking…</string>
   <string name="check_failed">Couldn\'t check. Check the Wi-Fi, then try again.</string>
   <string name="check_updates">Check for updates</string>
-  <string name="turn_off_nouride">Turn off Nouride</string>
+  <string name="stop_server">Stop Nouride server</string>
   <string name="appearance_title">Appearance</string>
   <string name="appearance_phone">Same as phone</string>
   <string name="appearance_light">Light</string>

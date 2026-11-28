@@ -57,7 +57,7 @@ internal class MoreTab(
   /** Keeping Nouride running is this phone's own server's business: hidden while Nouride lives elsewhere. */
   private val running: LinearLayout = ui.card()
   private val turnOff: Button = ui.quiet { onTurnOff() }.apply {
-    setText(R.string.turn_off_nouride)
+    setText(R.string.stop_server)
     setTextColor(ui.color(R.color.warn))
   }
 
