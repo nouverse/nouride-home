@@ -1,5 +1,6 @@
 //! The menu bar's menu, top to bottom: the state in one line, the update notice when one waits, Open Nouride, Start or
-//! Turn off (Nouride the app installed, on this computer), Quit. Nouride Home's own window has no item: Open Nouride
+//! Turn off (Nouride the app installed, on this computer), Quit. In the Dev build the state line says Dev first, as its
+//! icon carries a mark: both builds can sit in the menu bar at once. Nouride Home's own window has no item: Open Nouride
 //! shows it only when there is no dashboard to show (`open_target`), and the dashboard's "Back to Nouride Home" leads
 //! to it.
 
@@ -15,6 +16,9 @@ pub struct Item {
   /// The key of its words.
   pub words: String,
   pub enabled: bool,
+  /// The key of words put in place of `{state}` in this item's words.
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub state: Option<String>,
 }
 
 /// What the menu is drawn from.
@@ -28,9 +32,13 @@ pub struct Input<'a> {
   pub phase: Phase,
   pub app_update: bool,
   pub nouride_update: bool,
+  /// The Dev build.
+  pub dev: bool,
 }
 
 pub const STATE: &str = "state";
+/// The Dev build's state line: "Dev · {state}".
+pub const DEV_STATE: &str = "tray_dev_state";
 pub const UPDATES: &str = "updates";
 pub const OPEN: &str = "open";
 pub const START: &str = "start";
@@ -57,13 +65,17 @@ pub fn open_target(place: Option<Where>, look: &Look) -> Target {
 }
 
 fn item(id: &'static str, words: impl Into<String>, enabled: bool) -> Item {
-  Item { id, words: words.into(), enabled }
+  Item { id, words: words.into(), enabled, state: None }
 }
 
 pub fn menu(input: Input) -> Vec<Item> {
   let mut out = vec![];
   let state = if input.place.is_none() { "tray_not_set_up".to_owned() } else { input.look.words.title() };
-  out.push(item(STATE, state, false));
+  if input.dev {
+    out.push(Item { state: Some(state), ..item(STATE, DEV_STATE, false) });
+  } else {
+    out.push(item(STATE, state, false));
+  }
   if let Some(notice) = notices::tray(input.app_update, input.nouride_update) {
     out.push(item(UPDATES, notice, true));
   }
@@ -89,7 +101,7 @@ mod tests {
   }
 
   fn input(place: Option<Where>, look: &Look, ours: bool, phase: Phase) -> Input<'_> {
-    Input { place, look, ours, phase, app_update: false, nouride_update: false }
+    Input { place, look, ours, phase, app_update: false, nouride_update: false, dev: false }
   }
 
   #[test]
@@ -141,6 +153,16 @@ mod tests {
     let items = menu(input(None, &look, false, Phase::Stopped));
     assert_eq!(ids(&items), [STATE, OPEN, QUIT]);
     assert_eq!(items[0].words, "tray_not_set_up");
+  }
+
+  #[test]
+  fn the_dev_build_says_so_on_the_state_line_and_nothing_else_changes() {
+    let look = status::of(Phase::Running, true);
+    let release = menu(input(Some(Where::Here), &look, true, Phase::Running));
+    let dev = menu(Input { dev: true, ..input(Some(Where::Here), &look, true, Phase::Running) });
+    assert_eq!(dev[0], Item { id: STATE, words: DEV_STATE.to_owned(), enabled: false, state: Some("running_title".to_owned()) });
+    assert_eq!(release[0].state, None);
+    assert_eq!(dev[1..], release[1..]);
   }
 
   #[test]

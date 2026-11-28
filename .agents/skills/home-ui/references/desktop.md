@@ -185,6 +185,10 @@ The icon is the cat's head as a template image (macOS draws it in the menu bar's
    first.
 5. Quit Nouride Home ("Nouride keeps running" is what Quit means: it never stops Nouride).
 
+The Dev build's icon carries a dot in its lower right corner, cut out of the head (`icons-dev/tray.png`, from
+`scripts/make-icons.py`), and its state line starts with "Dev · ", so it is told from the release app beside it. The
+release build's icon and menu do not change.
+
 ## The dashboard's window
 
 Opened by Open Nouride (in the menu bar or on Home): the dashboard, signed in, at 1200 × 800, titled "Nouride". Links outside Nouride open in the

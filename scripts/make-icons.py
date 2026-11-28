@@ -4,6 +4,8 @@
 macOS draws an app icon as a rounded square on Apple's grid (an 824-pixel body on a 1024 canvas), so the cat's head
 sits on its lavender there, as it sits on a disc on Android; the Dev build's is the same cat on yellow. The menu bar's
 icon is the head's silhouette as a template image (black and alpha only), which macOS draws in the menu bar's colour.
+A template has no colour to tell the Dev build by, so the Dev build's carries a shape: a filled dot in the lower right
+corner, cut out of the head with a clear ring so it reads as a badge at menu bar size.
 
 Android TV's launcher shows an app by its banner, 320x180 at xhdpi: the cat's head on its lavender at the left and the
 app's name in Fredoka, ink on lavender; the Dev build's on yellow, with its own name.
@@ -32,7 +34,7 @@ def app_icon(color: str, out: str) -> None:
     canvas.save(out)
 
 
-def tray_icon(out: str, px: int) -> None:
+def tray_icon(out: str, px: int, dev: bool = False) -> None:
     cat = Image.open("assets/icon_cat.webp").convert("RGBA")
     box = cat.getbbox()
     cat = cat.crop(box)
@@ -40,9 +42,25 @@ def tray_icon(out: str, px: int) -> None:
     square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     square.alpha_composite(cat, ((side - cat.size[0]) // 2, (side - cat.size[1]) // 2))
     alpha = square.split()[3].resize((px, px), Image.LANCZOS)
+    if dev:
+        alpha = dev_badge(alpha, px)
     template = Image.new("RGBA", (px, px), (0, 0, 0, 0))
     template.putalpha(alpha)
     template.save(out)
+
+
+def dev_badge(alpha: Image.Image, px: int) -> Image.Image:
+    """The Dev mark, drawn at eight times the size and scaled down so its edges are smooth."""
+    scale = 8
+    big = px * scale
+    dot = int(px * 0.36) * scale
+    ring = int(px * 0.08) * scale
+    mask = alpha.resize((big, big), Image.LANCZOS)
+    draw = ImageDraw.Draw(mask)
+    x1 = y1 = big - 1
+    draw.ellipse((x1 - dot - 2 * ring, y1 - dot - 2 * ring, x1, y1), fill=0)
+    draw.ellipse((x1 - dot - ring, y1 - dot - ring, x1 - ring, y1 - ring), fill=255)
+    return mask.resize((px, px), Image.LANCZOS)
 
 
 BANNER = (320, 180)
@@ -85,4 +103,5 @@ if __name__ == "__main__":
     app_icon(RELEASE, "apps/desktop/src-tauri/icons/source.png")
     app_icon(DEV, "apps/desktop/src-tauri/icons-dev/source.png")
     tray_icon("apps/desktop/src-tauri/icons/tray.png", 44)
+    tray_icon("apps/desktop/src-tauri/icons-dev/tray.png", 44, dev=True)
     print("icons written")

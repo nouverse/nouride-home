@@ -15,11 +15,17 @@ use crate::{commands, windows};
 
 pub const ID: &str = "nouride-home";
 
+/// The cat's head; the Dev build's carries a dot, so the two builds side by side in the menu bar are told apart.
+#[cfg(not(feature = "dev"))]
+const ICON: &[u8] = include_bytes!("../icons/tray.png");
+#[cfg(feature = "dev")]
+const ICON: &[u8] = include_bytes!("../icons-dev/tray.png");
+
 /// The items last drawn, for the e2e dump.
 pub static LAST: Mutex<Vec<(String, String, bool)>> = Mutex::new(Vec::new());
 
 pub fn create(handle: &AppHandle, app: &Arc<App>) -> tauri::Result<TrayIcon> {
-  let icon = Image::from_bytes(include_bytes!("../icons/tray.png"))?;
+  let icon = Image::from_bytes(ICON)?;
   let menu = build_menu(handle, &items(app, &app.snapshot()))?;
   let app = app.clone();
   TrayIconBuilder::with_id(ID)
@@ -41,6 +47,7 @@ pub fn items(app: &App, s: &Snapshot) -> Vec<Item> {
     phase: inner.phase,
     app_update: s.app_update.is_some(),
     nouride_update: s.nouride_update.is_some(),
+    dev: app.build.dev,
   })
 }
 
@@ -52,7 +59,10 @@ fn build_menu(handle: &AppHandle, items: &[Item]) -> tauri::Result<Menu<tauri::W
     if item.id == menu_rules::QUIT || i == 1 {
       menu.append(&PredefinedMenuItem::separator(handle)?)?;
     }
-    let words = t(&item.words);
+    let words = match &item.state {
+      Some(state) => t(&item.words).replace("{state}", &t(state)),
+      None => t(&item.words),
+    };
     menu.append(&MenuItem::with_id(handle, item.id, &words, item.enabled, None::<&str>)?)?;
     last.push((item.id.to_owned(), words, item.enabled));
   }
