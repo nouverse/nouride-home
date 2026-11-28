@@ -1,0 +1,10 @@
+## e2e quit (the app ends while the first build's CFUserNotification alert is up)
+{
+  "action": "quit",
+  "answer": "quitting",
+  "ok": true
+}
+Dev app gone
+Could not find service "tech.nouverse.nouride.home.dev.nouride" in domain for user gui: 501
+health 000
+no answer on 18264

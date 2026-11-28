@@ -1,0 +1,9 @@
+## reopen after the crash-like end: the server kept running, the icon is back
+state = running pid = 48431 | health 200 | app 49363
+## e2e terminate (AppKit terminate from the main queue, as the Dock's Quit and a logout)
+{"action":"terminate","answer":"terminating","ok":true}
+Could not find service "tech.nouverse.nouride.home.dev.nouride" in domain for user gui: 501 | health 000 | app gone
+no window of UserNotificationCenter or Nouride Home Dev on screen
+1795838643 Nouride Home Dev 0.2.2 started
+1795838644 dashboard sign-in: session handed to the window
+1795838648 the app ends: Nouride stops

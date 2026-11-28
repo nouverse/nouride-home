@@ -1,0 +1,25 @@
+== 2026-11-28T03:57:32Z
+-- app processes
+33032 ~/nix-work/nouride-home/target/debug/bundle/macos/Nouride Home Dev.app/Contents/MacOS/nouride-home
+37738 /Applications/Nouride Home.app/Contents/MacOS/nouride-home
+-- ~/Library/LaunchAgents (nouride)
+tech.nouverse.nouride.home.dev.nouride.plist
+-- app folder plists
+(none)
+-- launchd: tech.nouverse.nouride.home.dev.nouride
+	path = ~/Library/LaunchAgents/tech.nouverse.nouride.home.dev.nouride.plist
+	state = running
+	pid = 867
+	last exit code = (never exited)
+		state = active
+		state = active
+-- launchd: tech.nouverse.nouride.home.dev.login
+Could not find service "tech.nouverse.nouride.home.dev.login" in domain for user gui: 501
+-- port 18264
+nouride 867
+-- /health
+200
+-- never touched: release app label and Nouride's own label
+Could not find service "tech.nouverse.nouride.home.nouride" in domain for user gui: 501
+Could not find service "tech.nouverse.nouride" in domain for user gui: 501
+Nov 28 09:16

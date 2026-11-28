@@ -1,0 +1,77 @@
+{
+ "tray": [
+  {
+   "enabled": false,
+   "id": "state",
+   "words": "Dev \u00b7 Nouride is running"
+  },
+  {
+   "enabled": true,
+   "id": "updates",
+   "words": "A new Nouride is ready"
+  },
+  {
+   "enabled": true,
+   "id": "open",
+   "words": "Open Nouride"
+  },
+  {
+   "enabled": true,
+   "id": "stop",
+   "words": "Stop Nouride server"
+  },
+  {
+   "enabled": true,
+   "id": "quit",
+   "words": "Quit Nouride"
+  }
+ ],
+ "agent": {
+  "installed": true,
+  "label": "tech.nouverse.nouride.home.dev.nouride",
+  "path": "~/Library/Application Support/tech.nouverse.nouride.home.dev/tech.nouverse.nouride.home.dev.nouride.plist"
+ },
+ "login": {
+  "label": "tech.nouverse.nouride.home.dev.login",
+  "path": "~/Library/LaunchAgents/tech.nouverse.nouride.home.dev.login.plist",
+  "registered": true
+ },
+ "alert": null
+}
+windows: {'dashboard': 'http://127.0.0.1:18264/dashboard/', 'main': None}
+phase: running here
+{
+  "Label" => "tech.nouverse.nouride.home.dev.login"
+  "LimitLoadToSessionType" => "Aqua"
+  "ProcessType" => "Interactive"
+  "ProgramArguments" => [
+    0 => "~/nix-work/nouride-home/target/debug/bundle/macos/Nouride Home Dev.app/Contents/MacOS/nouride-home"
+    1 => "--login"
+  ]
+  "RunAtLoad" => true
+}
+== 2026-11-28T03:58:23Z
+-- app processes
+37738 /Applications/Nouride Home.app/Contents/MacOS/nouride-home
+47188 ~/nix-work/nouride-home/target/debug/bundle/macos/Nouride Home Dev.app/Contents/MacOS/nouride-home
+-- ~/Library/LaunchAgents (nouride)
+tech.nouverse.nouride.home.dev.login.plist
+-- app folder plists
+tech.nouverse.nouride.home.dev.nouride.plist
+-- launchd: tech.nouverse.nouride.home.dev.nouride
+	path = ~/Library/LaunchAgents/tech.nouverse.nouride.home.dev.nouride.plist
+	state = running
+	pid = 867
+	last exit code = (never exited)
+		state = active
+		state = active
+-- launchd: tech.nouverse.nouride.home.dev.login
+Could not find service "tech.nouverse.nouride.home.dev.login" in domain for user gui: 501
+-- port 18264
+nouride 867
+-- /health
+200
+-- never touched: release app label and Nouride's own label
+Could not find service "tech.nouverse.nouride.home.nouride" in domain for user gui: 501
+Could not find service "tech.nouverse.nouride" in domain for user gui: 501
+Nov 28 09:16

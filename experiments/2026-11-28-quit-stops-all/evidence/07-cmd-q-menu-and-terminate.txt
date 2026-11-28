@@ -1,0 +1,20 @@
+## e2e menu (the app menu)
+{"items": ["About Nouride Home Dev", "", {"id": "menu_settings", "words": "Settings\u2026"}, "", "Services", "", "Hide Nouride Home Dev", "Hide Others", "", {"id": "menu_quit", "words": "Quit Nouride"}], "menu": "Nouride Home Dev"}
+## e2e menu menu_quit, then e2e alert Cancel
+{"action":"menu","answer":"done","ok":true}
+{  "action": "alert",  "answer": {    "buttons": [      "Cancel",      "Quit"    ],    "words": [      "Quit Nouride?",      "Your agents stop answering until you open Nouride again."    ]  },  "ok": true}
+state = running pid = 48431 | health 200 | app 48286
+## e2e terminate (AppKit terminate, as the Dock's Quit and a logout)
+{"action":"terminate","answer":"terminating","ok":true}
+state = running pid = 48431 | health 200 | app 48286
+Nouride Home Dev
+Nouride Home Dev
+1795838297 Nouride's LaunchAgent moved into the app's folder
+1795838297 opens at login: true
+1795838354 the app ends: Nouride stops
+1795838476 the app opened: Nouride starts
+1795838495 quit: asked, cancel
+1795838501 quit: asked, quit
+1795838515 the app opened: Nouride starts
+1795838540 stop: asked, stop
+1795838569 quit: asked, cancel

@@ -1,0 +1,28 @@
+## e2e tray quit
+{
+  "action": "tray",
+  "answer": "done",
+  "ok": true
+}
+## e2e alert (read)
+{
+  "action": "alert",
+  "error": "no alert is up",
+  "ok": false
+}
+## e2e alert Cancel
+{
+  "action": "alert",
+  "error": "no alert is up",
+  "ok": false
+}
+## after Cancel
+{
+  "action": "alert",
+  "error": "no alert is up",
+  "ok": false
+}
+47188 ~/nix-work/nouride-home/target/debug/bundle/macos/Nouride Home Dev.app/Contents/MacOS/nouride-home
+	state = running
+	pid = 867
+health 200

@@ -1,0 +1,17 @@
+## reopen
+state = running pid = 48300 | health 200 | app 48286
+tray: ['Dev · Nouride is running', 'A new Nouride is ready', 'Open Nouride', 'Stop Nouride server', 'Quit Nouride']
+windows: {'dashboard': 'http://127.0.0.1:18264/dashboard/', 'main': None}
+## e2e tray stop
+{"action":"tray","answer":"done","ok":true}
+{  "action": "alert",  "answer": {    "buttons": [      "Cancel",      "Stop"    ],    "words": [      "Stop Nouride server?",      "Your agents stop answering until you start it again."    ]  },  "ok": true}
+## e2e alert Stop
+{"action":"alert","answer":{"buttons":["Cancel","Stop"],"words":["StopNourideserver?","Youragentsstopansweringuntilyoustartitagain."]},"ok":true}
+Could not find service "tech.nouverse.nouride.home.dev.nouride" in domain for user gui: 501 | health 000 | app 48286
+tray: ['Dev · Nouride is off', 'A new Nouride is ready', 'Open Nouride', 'Start Nouride server', 'Quit Nouride']
+windows: {'dashboard': 'http://127.0.0.1:18264/dashboard/', 'main': None}
+## e2e tray start
+{"action":"tray","answer":"done","ok":true}
+state = running pid = 48431 | health 200 | app 48286
+tray: ['Dev · Starting Nouride', 'A new Nouride is ready', 'Open Nouride', 'Stop Nouride server', 'Quit Nouride']
+windows: {'dashboard': 'http://127.0.0.1:18264/dashboard/', 'main': None}

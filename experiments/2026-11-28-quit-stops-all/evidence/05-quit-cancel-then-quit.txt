@@ -1,0 +1,32 @@
+## before
+state = running pid = 48140 | health 200 | app 48122
+## e2e tray quit
+{"action":"tray","answer":"done","ok":true}
+## e2e alert
+{
+  "action": "alert",
+  "answer": {
+    "buttons": [
+      "Cancel",
+      "Quit"
+    ],
+    "words": [
+      "Quit Nouride?",
+      "Your agents stop answering until you open Nouride again."
+    ]
+  },
+  "ok": true
+}
+## e2e alert Cancel
+{"action":"alert","answer":{"buttons":["Cancel","Quit"],"words":["QuitNouride?","YouragentsstopansweringuntilyouopenNourideagain."]},"ok":true}
+## after Cancel
+{"action":"alert","error":"noalertisup","ok":false}
+state = running pid = 48140 | health 200 | app 48122
+## e2e tray quit, then e2e alert Quit
+{"action":"tray","answer":"done","ok":true}
+{"action":"alert","answer":{"buttons":["Cancel","Quit"],"words":["QuitNouride?","YouragentsstopansweringuntilyouopenNourideagain."]},"ok":true}
+## after Quit
+Could not find service "tech.nouverse.nouride.home.dev.nouride" in domain for user gui: 501 | health 000 | app gone
+launchctl print exit 113
+18264 closed
+no window of UserNotificationCenter or Nouride Home Dev on screen
