@@ -24,8 +24,8 @@ two scrolls in one another catch the wrong finger.
 
 ## Nothing over the screen
 
-A dialog over the screen is only for a confirmation, before something the person may not have meant: **Turn off
-Nouride** on More, and leaving the dashboard (`DashboardActivity`): "Go back to Nouride Home?", with Go back and Stay,
+A dialog over the screen is only for a confirmation, before something the person may not have meant: **Stop Nouride
+server** on More, and leaving the dashboard (`DashboardActivity`): "Go back to Nouride Home?", with Go back and Stay,
 asked by Back at the dashboard's first page and by the dashboard's "Back to Nouride Home" on any page
 (`spec/link-policy.md`). Everything else is said on the page (the owner,
 2026-11-16): a new version is a card on Home, a permission Android needs is a sentence and a button on the card that
@@ -59,8 +59,8 @@ resizing a split screen makes the screen again, and the open section carries ove
   the phone may stop Nouride with the screen off. It scrolls when the screen is too short for it (a phone turned
   sideways), so Technical Logs is never cut off. No sidebar before the first question is answered nor while the first
   setup runs: the question, or the setup's progress, stands alone in the middle of the screen.
-- **More's split**: Settings holds More's cards (where Nouride runs, keeping it running, the appearance, Turn off
-  Nouride); Versions and updates and Technical Logs are the same pages as the phone's screens of their own
+- **More's split**: Settings holds More's cards (where Nouride runs, keeping it running, the appearance, Stop
+  Nouride server); Versions and updates and Technical Logs are the same pages as the phone's screens of their own
   (`ui/VersionsPage.kt`, `ui/LogsPage.kt`), drawn in the page with its name on top and no back arrow. Words that send
   the person to More say Settings there (`home_battery_banner_settings`, `where_stops_here_settings`).
 - **Pages**: the section's name in Fredoka on top (the cat is in the sidebar), then the content, centred at a readable
@@ -92,7 +92,7 @@ person came from, the first screen or More, with nothing changed. What is wrong 
 sentence (`ui/AddressForm.kt`): nothing typed, an `http://` address ("Nouride Home only opens addresses that start
 with https://. Try it with https://."), something that is not an address, and an address nothing answers at, which
 Connect checks once before taking it ("Checking…"), as a typo is the likeliest cause. While Nouride runs on this phone, the screen says first, on
-pink, that it turns off and its agents stop answering until the person switches back in More.
+pink, that its server stops and its agents stop answering until the person switches back in More.
 
 Answered "another computer", Home keeps its one card and one button, for that computer's Nouride: its `/health` is
 asked when the screen opens and on Try again (`server/RemoteReply`), and the card says "Nouride is running" with the
@@ -194,8 +194,8 @@ is that computer's.
 - **No button for Nouride's files.** Taking Nouride's chats, memories, agents and files out, or to another device, is
   Nouride's own Export and import, in the dashboard's Settings: one file Nouride can read back. The app makes no copy
   of its own (it had a zip on this tab, taken out before 0.2.1 was released).
-- **Turn off Nouride**: amber words, not a button, so it is never pressed by mistake. It asks once: "Turn Nouride off?
-  Your assistant will not answer until you start it again."
+- **Stop Nouride server**: amber words, not a button, so it is never pressed by mistake. It asks once: "Stop Nouride
+  server?", "Your agents stop answering until you start it again.", Stop and Cancel.
 - **Technical Logs ›**, last.
 
 ## On a TV
@@ -252,8 +252,9 @@ Fun and calm: the Nouride cat, soft colours, round shapes, big touch targets.
 
 ## Words
 
-- The app is "Nouride Home"; what it runs is "Nouride", never the server, the daemon or the service. Say "the
-  phone", not the device.
+- The app is "Nouride Home"; what it runs is "Nouride", never the server, the daemon or the service, except the one
+  control that stops it, **Stop Nouride server** (the owner, 2026-11-28; the computer's words). Say "the phone", not
+  the device.
 - Times as people say them: "a few minutes", "just now". Not timestamps.
 - Every string is a resource in `res/values/strings.xml`. The app is English only, whatever language the phone is
   set to (the owner, 2026-11-07): no `values-<language>` folder. Plain everyday English: "Nouride is running.", not
@@ -262,7 +263,8 @@ Fun and calm: the Nouride cat, soft colours, round shapes, big touch targets.
 
 ## The notification
 
-The foreground service must show one. It says the state in the same words as the screen ("Nouride is running") and
+The foreground service must show one: Nouride runs only while something shows it, and on the phone this is it. It
+says the state in the same words as the screen ("Nouride is running") and
 nothing technical. Tapping it opens the status screen. It has no log line and no address. When a new version of the
 app is waiting, its second line says "A new version is ready. Tap to update."; of Nouride, "A new Nouride is ready. Tap to
 update."; of both, "Updates are ready. Tap to update." (`UpdateNotices`).
