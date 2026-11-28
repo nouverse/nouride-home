@@ -70,9 +70,8 @@ pub fn redraw(handle: &AppHandle, app: &App, s: &Snapshot) {
 /// What a menu item does: the same as the button it stands for.
 pub fn press(handle: &AppHandle, app: &Arc<App>, id: &str) {
   match id {
-    menu_rules::OPEN_HOME => windows::main::show(handle),
     menu_rules::UPDATES => windows::main::show_at(handle, "versions"),
-    menu_rules::OPEN_DASHBOARD => windows::dashboard::open(handle, app),
+    menu_rules::OPEN => windows::open_nouride(handle, app),
     menu_rules::START => commands::start_now(handle, app),
     // Turning off asks first, in the window: Settings has it.
     menu_rules::TURN_OFF => windows::main::show_at(handle, "settings"),

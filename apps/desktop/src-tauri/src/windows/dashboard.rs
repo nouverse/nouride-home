@@ -57,8 +57,16 @@ fn to_browser(handle: &AppHandle, app: &App, url: &Url, what: &str) {
   }
 }
 
-/// Opens the dashboard, or the cat and Try again when Nouride does not answer.
+/// Opens the dashboard, or the cat and Try again when Nouride does not answer. A dashboard already on screen is brought
+/// forward as it is, at the page the person was on. Nouride Home's window closes: the dashboard's "Back to Nouride
+/// Home" is the way to it, and closing the dashboard leaves no window behind. Blocking: never on the main thread.
 pub fn open(handle: &AppHandle, app: &Arc<App>) {
+  if let Some(window) = handle.get_webview_window(LABEL) {
+    if window.url().is_ok_and(|url| !own_page(&url) && url.as_str() != "about:blank") {
+      come_forward(handle, &window);
+      return;
+    }
+  }
   let (url, origin) = app.dashboard();
   let remote = app.where_() == Some(Where::Remote);
   let reachable = if remote {
@@ -92,8 +100,16 @@ pub fn open(handle: &AppHandle, app: &Arc<App>) {
       let _ = window.navigate(target);
     }
   }
+  come_forward(handle, &window);
+}
+
+fn come_forward(handle: &AppHandle, window: &WebviewWindow) {
+  let _ = window.unminimize();
   let _ = window.show();
   let _ = window.set_focus();
+  if let Some(home) = handle.get_webview_window(windows::main::LABEL) {
+    let _ = home.close();
+  }
 }
 
 /// Made each time it is opened after a close, which destroys it with its WebKit processes (`open` signs in again). It may stay open across a change of place, so which Nouride

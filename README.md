@@ -162,8 +162,9 @@ computer** and the app installs Nouride with the official installer and keeps it
 computer and, when allowed, from other devices on the same network. Or the computer opens a Nouride that already runs
 somewhere else: choose **Use Nouride on another computer** and give its HTTPS address once.
 
-Its icon sits in the menu bar: the state in one line, opening the app or the dashboard, starting or turning off
-Nouride, and a new version when one is ready. Closing the window keeps it there.
+Its icon sits in the menu bar: the state in one line, Open Nouride (the dashboard, or the app itself while there is no
+dashboard to reach), starting or turning off Nouride, and a new version when one is ready. Opening the app from the
+Dock does the same. Closing the window keeps it there.
 
 Status: v0.1, macOS on Apple Silicon. Linux is planned and the code is kept ready for it. Builds are not signed with a
 Developer ID yet; see `docs/rfc/0001-desktop-v0.1.md`.

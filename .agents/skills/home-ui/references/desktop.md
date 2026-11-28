@@ -33,7 +33,15 @@ bar; Nouride keeps running either way.
 **Windows live while they are open.** Closing the app's window or the dashboard's destroys it, and its WebKit
 processes with it (on a Mac, about 25 MB for the app's window and 70 to 200 MB for the dashboard's, which grows with
 use; `experiments/2026-11-16-modals-memory`). The app stays in the menu bar. Whatever shows a window makes it again
-when it is gone: the menu bar, a Dock click, Open Nouride, the dashboard's back. So a window is looked up by its label
+when it is gone: the menu bar, a Dock click, Open Nouride, the dashboard's back.
+
+**Open Nouride is how the app opens.** The menu bar's Open Nouride, a Dock click with no window shown, opening the app
+again and the app's own start all show the same window (`looks::tray::open_target`, `windows::open_nouride`): the
+dashboard, signed in, when there is one to reach; Nouride Home's window before the first question is answered and
+while Nouride is off, starting, failed or not answering, since Home says so and has Start. Opening the dashboard closes
+Nouride Home's window, so closing the dashboard leaves no window and nothing comes forward in its place: Nouride Home
+comes back through the dashboard's "Back to Nouride Home", or the menu bar's items that name one of its pages. A
+dashboard already on screen is brought forward at the page it is on. So a window is looked up by its label
 each time it is needed, never kept (`windows::main::show`, `windows::dashboard::open`); the app's window is made from
 its config at the screen asked for (`looks::window::main_page`, read by `startSection`), the dashboard's signed in
 again as it opens. Closing the last window does not quit the app (`looks::window::exits`); Quit does.
@@ -171,15 +179,15 @@ The icon is the cat's head as a template image (macOS draws it in the menu bar's
 1. The state, greyed: Home's title ("Nouride is running").
 2. The update notice when one waits: "A new Nouride is ready", "A new version of Nouride Home is ready", or "Updates are
    ready", which opens Versions and updates.
-3. Open Nouride Home.
-4. Open Nouride, while it may work.
-5. Start Nouride or Turn off Nouride (this computer, installed by the app). Turn off opens Settings, where it asks
+3. Open Nouride: the dashboard, or Nouride Home when there is no dashboard to reach (above). The menu has no Open
+   Nouride Home.
+4. Start Nouride or Turn off Nouride (this computer, installed by the app). Turn off opens Settings, where it asks
    first.
-6. Quit Nouride Home ("Nouride keeps running" is what Quit means: it never stops Nouride).
+5. Quit Nouride Home ("Nouride keeps running" is what Quit means: it never stops Nouride).
 
 ## The dashboard's window
 
-Opened by Open Nouride: the dashboard, signed in, at 1200 × 800, titled "Nouride". Links outside Nouride open in the
+Opened by Open Nouride (in the menu bar or on Home): the dashboard, signed in, at 1200 × 800, titled "Nouride". Links outside Nouride open in the
 default browser, the dashboard's sign-in buttons above all (Claude, ChatGPT, GitHub Copilot, Google Gemini): the
 person's own session is there, and the dashboard's cookie never goes to a stranger's page. A link that asks for a new
 tab (`target="_blank"`) goes the same way: WebKit drops such a click, so the window runs `link_policy::NEW_TABS_SCRIPT`
