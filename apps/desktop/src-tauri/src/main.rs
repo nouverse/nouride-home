@@ -2,6 +2,7 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod app_menu;
 mod applog;
 mod commands;
 #[cfg(feature = "dev")]
@@ -25,7 +26,7 @@ use crate::state::App;
 fn main() {
   let build = Build::current();
   let mut builder = tauri::Builder::default();
-  // One app at a time: a second launch brings the first forward (and, in the Dev build, hands it an e2e action).
+  // One app at a time: opening it again is Open Nouride in the first (and, in the Dev build, hands it an e2e action).
   builder = builder.plugin(tauri_plugin_single_instance::init(|handle, argv, _cwd| {
     #[cfg(feature = "dev")]
     if argv.iter().any(|a| a == "--e2e") {
@@ -35,7 +36,7 @@ fn main() {
       return;
     }
     let _ = argv;
-    windows::main::show(handle);
+    windows::open_nouride(handle, handle.state::<Arc<App>>().inner());
   }));
   builder
     .plugin(tauri_plugin_opener::init())
@@ -43,6 +44,8 @@ fn main() {
     .plugin(tauri_plugin_updater::Builder::new().build())
     .plugin(tauri_plugin_deep_link::init())
     .plugin(tauri_plugin_dialog::init())
+    .menu(move |handle| app_menu::build(handle, build.name))
+    .on_menu_event(|handle, event| app_menu::press(handle, event.id().as_ref()))
     .setup(move |tauri_app| {
       let handle = tauri_app.handle().clone();
       // The bundle id the config gave this app must be the build's: a release config with the Dev feature (or the
@@ -61,6 +64,12 @@ fn main() {
       windows::apply_appearance(&handle, app.appearance());
       tray::create(&handle, &app)?;
       poller::start(handle.clone(), app.clone());
+      // The app opens as Open Nouride does, once it has looked at Nouride: no window is made from the config.
+      let (h, a) = (handle.clone(), app.clone());
+      std::thread::spawn(move || {
+        poller::tick(&h, &a, &mut 0);
+        windows::open_nouride(&h, &a);
+      });
       // A Nouride the app installed is checked for a new version when the app opens, 15 minutes apart at most.
       let (h, a) = (handle.clone(), app.clone());
       std::thread::spawn(move || {
@@ -99,10 +108,10 @@ fn main() {
           api.prevent_exit();
         }
       }
-      // The Dock icon clicked with no window shown makes the app's window again.
+      // The Dock icon clicked with no window shown is Open Nouride.
       #[cfg(target_os = "macos")]
       if let RunEvent::Reopen { has_visible_windows: false, .. } = event {
-        windows::main::show(handle);
+        windows::open_nouride(handle, handle.state::<Arc<App>>().inner());
       }
       let _ = (handle, event);
     });
