@@ -35,8 +35,13 @@ fn main() {
       std::thread::spawn(move || e2e::handle(&handle, &app, &argv));
       return;
     }
-    let _ = argv;
-    windows::open_nouride(handle, handle.state::<Arc<App>>().inner());
+    let app = handle.state::<Arc<App>>().inner().clone();
+    if service::login::launched_at_login(&argv) {
+      let handle = handle.clone();
+      std::thread::spawn(move || windows::start_if_stopped(&handle, &app));
+    } else {
+      windows::open_nouride(handle, &app);
+    }
   }));
   builder
     .plugin(tauri_plugin_opener::init())
@@ -71,11 +76,18 @@ fn main() {
       windows::apply_appearance(&handle, app.appearance());
       tray::create(&handle, &app)?;
       poller::start(handle.clone(), app.clone());
-      // The app opens as Open Nouride does, once it has looked at Nouride: no window is made from the config.
+      // The app opens as Open Nouride does, once it has looked at Nouride: no window is made from the config. Run by
+      // its login item, it only starts Nouride and stays in the menu bar.
+      let at_login = service::login::launched_at_login(&std::env::args().collect::<Vec<_>>());
       let (h, a) = (handle.clone(), app.clone());
       std::thread::spawn(move || {
         poller::tick(&h, &a, &mut 0);
-        windows::open_nouride(&h, &a);
+        if at_login {
+          applog::write(&a.layout.app_log(), "opened at login");
+          windows::start_if_stopped(&h, &a);
+        } else {
+          windows::open_nouride(&h, &a);
+        }
       });
       // A Nouride the app installed is checked for a new version when the app opens, 15 minutes apart at most.
       let (h, a) = (handle.clone(), app.clone());

@@ -13,6 +13,11 @@ use crate::launchd::{escape, NOURIDE_OWN_LABEL};
 /// What the app is run with at login.
 pub const LOGIN_ARG: &str = "--login";
 
+/// Whether the app was run by its login item: it then starts Nouride and opens no window.
+pub fn launched_at_login<S: AsRef<str>>(argv: &[S]) -> bool {
+  argv.iter().skip(1).any(|a| a.as_ref() == LOGIN_ARG)
+}
+
 pub struct LoginItem {
   pub label: String,
   /// `~/Library/LaunchAgents/<label>.plist`.
@@ -117,6 +122,14 @@ mod tests {
     assert!(fs::read_to_string(&item.path).unwrap().contains("/Users/x/Applications/A.app"));
     assert!(item.sync(false, b).unwrap());
     assert!(!item.registered());
+  }
+
+  #[test]
+  fn a_login_is_told_by_its_argument_after_the_program() {
+    assert!(launched_at_login(&["/A.app/Contents/MacOS/a", "--login"]));
+    assert!(!launched_at_login(&["/A.app/Contents/MacOS/a"]));
+    assert!(!launched_at_login(&["/A.app/Contents/MacOS/a", "--e2e", "dump"]));
+    assert!(!launched_at_login(&["--login"]), "the program's own name is not an argument");
   }
 
   #[test]
