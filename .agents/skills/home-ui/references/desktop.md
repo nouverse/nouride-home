@@ -28,7 +28,7 @@ A desktop window, not the phone's screen made wider: 980 × 640 when it opens, r
 (`apps/desktop/src-tauri/tauri.conf.json`, and `tauri.dev.conf.json` for the Dev build). On macOS the title bar is an overlay with
 the title hidden: the sidebar runs up under the window buttons and leaves them room, and a 32 px strip along the top
 moves the window (`data-tauri-drag-region`). Linux keeps its own title bar. Closing the window keeps the app in the menu
-bar; Nouride keeps running either way.
+bar, and Nouride running.
 
 **Windows live while they are open.** Closing the app's window or the dashboard's destroys it, and its WebKit
 processes with it (on a Mac, about 25 MB for the app's window and 70 to 200 MB for the dashboard's, which grows with
@@ -44,11 +44,28 @@ comes back through the dashboard's "Back to Nouride Home", or the menu bar's ite
 dashboard already on screen is brought forward at the page it is on. So a window is looked up by its label
 each time it is needed, never kept (`windows::main::show`, `windows::dashboard::open`); the app's window is made from
 its config at the screen asked for (`looks::window::main_page`, read by `startSection`), the dashboard's signed in
-again as it opens. Closing the last window does not quit the app (`looks::window::exits`); Quit does.
+again as it opens. Closing the last window does not quit the app (`looks::window::exits`); Quit does, and Nouride
+stops with it (below).
+
+**Nouride runs only while the app shows it** (the owner, 2026-11-28): the menu bar's icon is how a person knows
+Nouride is on, so Nouride never runs without it (`service::rules`).
+
+- **Opening the app starts Nouride.** Its start, a Dock click, opening it again and Open Nouride start this
+  computer's Nouride first when the app installed it and it was stopped (by Quit or by Stop), then show what Open
+  Nouride shows: Nouride Home while it starts, the dashboard once it answers (`windows::start_if_stopped`).
+- **Quitting the app stops Nouride.** Quit Nouride asks first while Nouride runs here, then stops it and the app goes;
+  with Nouride on another computer or stopped, it goes at once. The Dock's Quit and a logout end the app through the
+  system and stop Nouride unasked. Only a crash leaves Nouride running, and opening the app again brings the icon
+  back. The restart that finishes the app's own update leaves Nouride as it is.
+- **The app opens at login, not Nouride.** Nouride's LaunchAgent is kept in the app's folder, where launchd does not
+  load it on its own; the app's own login item opens the app at login, which starts Nouride and opens no window
+  (`service::login`). The login item is there only while Nouride runs on this computer.
 
 **A modal only for a confirmation.** Nothing stands over a window but a question that confirms something the person
-pressed. The app's window has one, Settings' Turn off (`commons/components/Dialog.tsx`); the dashboard's has one, "Go
-back to Nouride Home?", a sheet of the system's own since the page there is Nouride's (`windows/dashboard.rs`). A
+pressed. The app's window has one, Settings' Stop Nouride server (`commons/components/Dialog.tsx`); the dashboard's
+has one, "Go back to Nouride Home?", a sheet of the system's own since the page there is Nouride's
+(`windows/dashboard.rs`); the menu bar has two, "Quit Nouride?" and "Stop Nouride server?", the system's alert over
+every window since the menu bar has no window of its own (`questions.rs`, words in `looks::ask`). A
 form, a choice, a message or an address opens in the page, where the person already is, and no other native dialog is
 ever shown (`apps/desktop/tests/modals.test.ts` holds both).
 
@@ -88,7 +105,8 @@ The address card is a round card in the app's look: "Nouride on another computer
 one field in DM Mono with `nouride.example.com` as its placeholder, then Connect and Cancel. What is wrong is said under
 the field, in its own sentence, Android's words: nothing typed, an `http://` address, something that is not an address,
 and an address nothing answers at, which Connect checks once ("Checking…"). While Nouride runs on this computer, the
-card says first, on pink, that it turns off and its agents stop answering until the person switches back in Settings.
+card says first, on pink, that its server stops and its agents stop answering until the person switches back in
+Settings.
 
 The screen is one centred column: the waving cat, the question and its sentence, then the two answers side by side as
 two big choice cards (an icon, the answer, one line under it: "Nouride Home installs it and keeps it running.", "Type the
@@ -112,7 +130,7 @@ This computer: one sentence of state and one main button, from `looks::status`:
 | Running, not answering yet | "Nouride is waking up" / "It will be ready in a moment." | (none) |
 | Running and answering | "Nouride is running" / "Your assistant is ready. You can close this window: Nouride keeps running." | Open Nouride |
 | Restarting on its own | "Nouride is starting again" / "It stopped for a moment. There is nothing you need to do." | (none) |
-| Turning off | "Turning Nouride off" / "Just a moment." | (none) |
+| Stopping | "Stopping Nouride server" / "Just a moment." | (none) |
 | Failed | "Nouride could not start" / "Check that the computer is online, then try again." | Try again |
 | Already on this computer (not the app's) | "Nouride is running" / "It was already on this computer. Nouride Home opens it." | Open Nouride |
 
@@ -167,9 +185,10 @@ rows that open other screens:
 - **No button for Nouride's files.** Taking Nouride's chats, memories, agents and files out, or to another computer,
   is Nouride's own Export and import, in the dashboard's Settings: one file Nouride can read back. The app makes no
   copy of its own (it had a zip here, taken out before 0.2.1 was released).
-- **Nouride on this computer** (installed by the app, while it may be turned off): one sentence and **Turn off
-  Nouride** in amber words, not a button. It asks once, the one modal on the app's window: "Turn Nouride off? Your assistant will not
-  answer until you start it again."
+- **Nouride on this computer** (installed by the app, while it may be stopped): one sentence, "Stop it when you
+  don't need it. It starts again when you press Start on Home or open Nouride Home again.", and **Stop Nouride
+  server** in amber words, not a button. It asks once, the one modal on the app's window: "Stop Nouride server? Your
+  agents stop answering until you start it again.", Stop and Cancel.
 
 ## The menu bar
 
@@ -181,9 +200,11 @@ The icon is the cat's head as a template image (macOS draws it in the menu bar's
    ready", which opens Versions and updates.
 3. Open Nouride: the dashboard, or Nouride Home when there is no dashboard to reach (above). The menu has no Open
    Nouride Home.
-4. Start Nouride or Turn off Nouride (this computer, installed by the app). Turn off opens Settings, where it asks
-   first.
-5. Quit Nouride Home ("Nouride keeps running" is what Quit means: it never stops Nouride).
+4. Start Nouride server or Stop Nouride server (this computer, installed by the app). Start starts it at once. Stop
+   asks first, "Stop Nouride server?", "Your agents stop answering until you start it again.", Stop and Cancel, then
+   stops it at once; the app stays in the menu bar.
+5. Quit Nouride: the app and Nouride with it. While Nouride runs here it asks first, "Quit Nouride?", "Your agents
+   stop answering until you open Nouride again.", Quit and Cancel; otherwise the app goes at once.
 
 The Dev build's icon carries a dot in its lower right corner, cut out of the head (`icons-dev/tray.png`, from
 `scripts/make-icons.py`), and its state line starts with "Dev · ", so it is told from the release app beside it. The
@@ -194,7 +215,8 @@ release build's icon and menu do not change.
 Tauri's own menus stay (the app's, File, Edit with copy and paste for the dashboard, View, Window, Help), with two ways
 to Nouride Home's window that need nothing from the dashboard's page, so a page that breaks never leaves the person
 without one (`apps/desktop/src-tauri/src/app_menu.rs`): Settings… (⌘,) under About in the app's menu opens Settings,
-and the app's name at the end of the Window menu opens Home.
+and the app's name at the end of the Window menu opens Home. The app's menu ends with Quit Nouride (⌘Q), the menu
+bar's, in place of the system's own Quit, which would end the app with no question.
 
 ## The dashboard's window
 
@@ -204,7 +226,7 @@ person's own session is there, and the dashboard's cookie never goes to a strang
 tab (`target="_blank"`) goes the same way: WebKit drops such a click, so the window runs `link_policy::NEW_TABS_SCRIPT`
 to turn it into `window.open`, and `link_policy::new_window` decides; a Nouride path that redirects out (the gateway's
 `/oauth/start`, to Google) leaves for the browser as it redirects, and the page on screen stays. When Nouride does not answer, the leaning cat and "Nouride isn't answering", "It may still be starting, or it
-is turned off. Check Home, then try again." with Try again stand in for the WebView's own error page. The dashboard's
+the Nouride server is stopped. Check Home, then try again." with Try again stand in for the WebView's own error page. The dashboard's
 "Back to Nouride Home" asks first, on any page, in a sheet on the window: "Go back to Nouride Home?", "Nouride keeps
 running and your agents keep answering. Press Open Nouride on Home to come back.", with Go back and Stay
 (`looks::leave`, the phone's words). Go back closes the window (destroying it, as its close button does, which asks
@@ -232,8 +254,9 @@ and at the top of its window.
 
 ## Words
 
-- The app is "Nouride Home"; what it runs is "Nouride", never the server, the daemon or the service. Say "the
-  computer".
+- The app is "Nouride Home"; what it runs is "Nouride", never the server, the daemon or the service, except the one control that stops and starts it, **Stop Nouride server** and **Start Nouride server**
+  (the owner, 2026-11-28), so stopping it is never mistaken for closing or quitting the app. Say
+  "the computer".
 - Every string is in `packages/ui-kit/src/words.json`. English only. No exclamation marks, no emoji, no jargon.
 
 ## Checking a change

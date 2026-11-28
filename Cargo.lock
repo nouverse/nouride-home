@@ -727,7 +727,7 @@ dependencies = [
 
 [[package]]
 name = "daemon"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "getrandom 0.3.4",
  "if-addrs",
@@ -937,7 +937,7 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
 name = "downloads"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde_json",
  "url",
@@ -2249,7 +2249,7 @@ dependencies = [
 
 [[package]]
 name = "link-policy"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde_json",
  "shared",
@@ -2291,7 +2291,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "looks"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde",
  "serde_json",
@@ -2468,9 +2468,10 @@ dependencies = [
 
 [[package]]
 name = "nouride-home"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "daemon",
+ "dispatch2",
  "downloads",
  "libc",
  "link-policy",
@@ -3019,7 +3020,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "place"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde",
  "serde_json",
@@ -3789,7 +3790,7 @@ dependencies = [
 
 [[package]]
 name = "service"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde",
  "shared",
@@ -3826,7 +3827,7 @@ dependencies = [
 
 [[package]]
 name = "shared"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde",
  "serde_json",
@@ -4992,7 +4993,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "updates"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "serde",
  "serde_json",

@@ -8,6 +8,7 @@ mod commands;
 #[cfg(feature = "dev")]
 mod e2e;
 mod poller;
+mod questions;
 mod setup;
 mod state;
 mod tray;
@@ -35,8 +36,13 @@ fn main() {
       std::thread::spawn(move || e2e::handle(&handle, &app, &argv));
       return;
     }
-    let _ = argv;
-    windows::open_nouride(handle, handle.state::<Arc<App>>().inner());
+    let app = handle.state::<Arc<App>>().inner().clone();
+    if service::login::launched_at_login(&argv) {
+      let handle = handle.clone();
+      std::thread::spawn(move || windows::start_if_stopped(&handle, &app));
+    } else {
+      windows::open_nouride(handle, &app);
+    }
   }));
   builder
     .plugin(tauri_plugin_opener::init())
@@ -60,15 +66,29 @@ fn main() {
       let uid = unsafe { libc::getuid() };
       let app = Arc::new(App::new(build, Layout::new(&data), uid, &home));
       applog::write(&app.layout.app_log(), &format!("{} {} started", build.name, env!("CARGO_PKG_VERSION")));
+      // Up to 0.2.2 Nouride's plist was where launchd loads it at every login, without the app: it moves into the
+      // app's folder, and the job loaded from it keeps running.
+      match app.agent.move_from(&service::launchd::launch_agents(&home)) {
+        Ok(true) => applog::write(&app.layout.app_log(), "Nouride's LaunchAgent moved into the app's folder"),
+        Ok(false) => {}
+        Err(e) => applog::write(&app.layout.app_log(), &format!("Nouride's LaunchAgent could not move: {e}")),
+      }
       tauri_app.manage(app.clone());
       windows::apply_appearance(&handle, app.appearance());
       tray::create(&handle, &app)?;
       poller::start(handle.clone(), app.clone());
-      // The app opens as Open Nouride does, once it has looked at Nouride: no window is made from the config.
+      // The app opens as Open Nouride does, once it has looked at Nouride: no window is made from the config. Run by
+      // its login item, it only starts Nouride and stays in the menu bar.
+      let at_login = service::login::launched_at_login(&std::env::args().collect::<Vec<_>>());
       let (h, a) = (handle.clone(), app.clone());
       std::thread::spawn(move || {
         poller::tick(&h, &a, &mut 0);
-        windows::open_nouride(&h, &a);
+        if at_login {
+          applog::write(&a.layout.app_log(), "opened at login");
+          windows::start_if_stopped(&h, &a);
+        } else {
+          windows::open_nouride(&h, &a);
+        }
       });
       // A Nouride the app installed is checked for a new version when the app opens, 15 minutes apart at most.
       let (h, a) = (handle.clone(), app.clone());
@@ -107,6 +127,13 @@ fn main() {
         if !looks::window::exits(*code) {
           api.prevent_exit();
         }
+      }
+      // Whatever ends the app stops the Nouride it runs, asked or not: Quit asked already, and stopped it; the Dock's
+      // Quit and a logout end the app through the system and are not asked (`service::rules::stops_on_exit`). Not
+      // when the app starts again to finish its own update: it is back in a moment.
+      if let RunEvent::Exit = event {
+        let app = handle.state::<Arc<App>>().inner().clone();
+        commands::stop_on_exit(&app);
       }
       // The Dock icon clicked with no window shown is Open Nouride.
       #[cfg(target_os = "macos")]

@@ -21,8 +21,8 @@
   <string name="this_phone_body">Turn on Open from other devices to use it on a tablet, a computer or a phone.</string>
   <string name="where_body">Run it on this TV, or open a Nouride you already have on another computer, at home or in the cloud.</string>
   <string name="where_phone">Run it on this TV</string>
-  <string name="where_stops_here">Nouride on this TV turns off. Its agents stop answering until you switch back to this TV in More.</string>
-  <string name="where_stops_here_settings">Nouride on this TV turns off. Its agents stop answering until you switch back to this TV in Settings.</string>
+  <string name="where_stops_here">The Nouride server on this TV stops. Its agents stop answering until you switch back to this TV in More.</string>
+  <string name="where_stops_here_settings">The Nouride server on this TV stops. Its agents stop answering until you switch back to this TV in Settings.</string>
   <string name="remote_running_body">It runs on another computer. This TV opens it.</string>
   <string name="place_phone">This TV</string>
   <string name="place_phone_body">Nouride runs here, on this TV.</string>

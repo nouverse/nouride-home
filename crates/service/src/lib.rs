@@ -1,9 +1,12 @@
-//! Keeping Nouride running when the app is closed: the app's own LaunchAgent on macOS. The plist is the one Nouride
-//! itself generates (`nouride service install --kind launchd`), given the app's own label so it never stands in for a
-//! Nouride the person installed by hand (`tech.nouverse.nouride`). Linux joins later as a systemd user unit behind the
-//! same [`Supervisor`] trait.
+//! Keeping Nouride running while the app is there to show it: the app's own LaunchAgent on macOS, kept in the app's
+//! folder and started by the app, and the app opened at login (`login`). The plist is the one Nouride itself generates
+//! (`nouride service install --kind launchd`), given the app's own label so it never stands in for a Nouride the
+//! person installed by hand (`tech.nouverse.nouride`). When the app starts and stops it is `rules`. Linux joins later
+//! as a systemd user unit behind the same [`Supervisor`] trait.
 
 pub mod launchd;
+pub mod login;
+pub mod rules;
 
 use std::io;
 use std::path::Path;

@@ -87,7 +87,7 @@ export function SettingsScreen({ s }: { s: Snapshot }) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="min-w-0 flex-1 basis-56 text-base-content/80">{t("settings_nouride_body")}</p>
             <TextButton tone="warn" onClick={() => setConfirmOff(true)}>
-              {t("turn_off_nouride")}
+              {t("stop_server")}
             </TextButton>
           </div>
         </Group>
@@ -95,8 +95,8 @@ export function SettingsScreen({ s }: { s: Snapshot }) {
       {/* The one modal: a confirmation. Everything else opens in the page. */}
       {confirmOff && (
         <Dialog onClose={() => setConfirmOff(false)}>
-          <h2 className="font-display text-xl tracking-tight">{t("turn_off_title")}</h2>
-          <p className="mt-2 text-base-content/75">{t("turn_off_body")}</p>
+          <h2 className="font-display text-xl tracking-tight">{t("stop_title")}</h2>
+          <p className="mt-2 text-base-content/75">{t("stop_body")}</p>
           <div className="mt-5 flex justify-end gap-2">
             <button type="button" className="btn btn-ghost" onClick={() => setConfirmOff(false)}>
               {t("cancel")}
@@ -109,7 +109,7 @@ export function SettingsScreen({ s }: { s: Snapshot }) {
                 ipc.turnOff();
               }}
             >
-              {t("turn_off")}
+              {t("stop")}
             </button>
           </div>
         </Dialog>

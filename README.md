@@ -163,8 +163,9 @@ computer and, when allowed, from other devices on the same network. Or the compu
 somewhere else: choose **Use Nouride on another computer** and give its HTTPS address once.
 
 Its icon sits in the menu bar: the state in one line, Open Nouride (the dashboard, or the app itself while there is no
-dashboard to reach), starting or turning off Nouride, and a new version when one is ready. Opening the app from the
-Dock does the same. Closing the window keeps it there.
+dashboard to reach), Start or Stop Nouride server, a new version when one is ready, and Quit Nouride, which stops
+Nouride with the app (it asks first). Opening the app from the Dock does the same as Open Nouride, and starts Nouride
+when it was stopped. Closing the window keeps it there.
 
 Status: v0.1, macOS on Apple Silicon. Linux is planned and the code is kept ready for it. Builds are not signed with a
 Developer ID yet; see `docs/rfc/0001-desktop-v0.1.md`.
@@ -174,8 +175,8 @@ Developer ID yet; see `docs/rfc/0001-desktop-v0.1.md`.
 - Asks once where Nouride should run, and changes it in Settings at any time.
 - On this computer: uses a Nouride that already answers on this computer's default port, or installs one with
   `https://get.nouride.com/install.sh` into the app's own folder (`~/Library/Application Support/<bundle id>/nouride`)
-  and keeps it running as the app's own LaunchAgent, so Nouride runs whether or not the app is open, and starts again
-  at login.
+  and runs it as the app's own LaunchAgent while the app is in the menu bar: closing a window keeps it running, Quit
+  Nouride stops it with the app, opening the app starts it again, and the app opens at login and starts it.
 - Opens the dashboard in a window of the app, signed in with the account the app made on the first setup. Links to
   anything but Nouride open in the browser.
 - Says when a new Nouride is ready (on Home, in the menu bar and with a dot on Versions and updates) and puts it in through Nouride's own update.

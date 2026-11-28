@@ -83,9 +83,8 @@ pub fn press(handle: &AppHandle, app: &Arc<App>, id: &str) {
     menu_rules::UPDATES => windows::main::show_at(handle, "versions"),
     menu_rules::OPEN => windows::open_nouride(handle, app),
     menu_rules::START => commands::start_now(handle, app),
-    // Turning off asks first, in the window: Settings has it.
-    menu_rules::TURN_OFF => windows::main::show_at(handle, "settings"),
-    menu_rules::QUIT => handle.exit(0),
+    menu_rules::STOP => commands::stop_asked(handle, app),
+    menu_rules::QUIT => commands::quit_now(handle, app),
     _ => {}
   }
 }

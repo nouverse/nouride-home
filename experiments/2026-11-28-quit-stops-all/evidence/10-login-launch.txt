@@ -1,0 +1,28 @@
+## before: app and server down
+no Dev app
+Could not find service "tech.nouverse.nouride.home.dev.nouride" in domain for user gui: 501 | health 000
+## launchctl bootstrap of the login item (what launchd does with it at login)
+exit 0
+  PID ARGS
+49462 ~/nix-work/nouride-home/target/debug/bundle/macos/Nouride Home Dev.app/Contents/MacOS/nouride-home --login
+	path = ~/Library/LaunchAgents/tech.nouverse.nouride.home.dev.login.plist
+	type = LaunchAgent
+	state = running
+
+	program = ~/nix-work/nouride-home/target/debug/bundle/macos/Nouride Home Dev.app/Contents/MacOS/nouride-home
+	arguments = {
+		~/nix-work/nouride-home/target/debug/bundle/macos/Nouride Home Dev.app/Contents/MacOS/nouride-home
+		--login
+	}
+--
+	pid = 49462
+	immediate reason = speculative
+state = running pid = 49477 | health 200
+windows: {'dashboard': None, 'main': None}
+tray: ['Dev · Starting Nouride', 'A new Nouride is ready', 'Open Nouride', 'Stop Nouride server', 'Quit Nouride']
+login: True
+no window of UserNotificationCenter or Nouride Home Dev on screen
+1795838667 Nouride Home Dev 0.2.2 started
+1795838667 opened at login
+1795838667 the app opened: Nouride starts
+## sfltool dumpbtm (Background Task Management)

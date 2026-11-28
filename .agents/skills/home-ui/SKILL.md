@@ -35,7 +35,13 @@ computer).
 - **The look** is Nouride's soft look, the dashboard's: cream page, white cards, peach for the one main button,
   lavender for where the person is, sage mint for what moves or is done, pink for what needs the person; Fredoka,
   Manrope and DM Mono; the cat whose pose follows the state. The Dev build is the same cat on yellow.
-- **The app is "Nouride Home"; what it runs is "Nouride"**, never the server, the daemon or the service.
+- **The app is "Nouride Home"; what it runs is "Nouride"**, never the server, the daemon or the service, except the
+  one control that stops and starts it: **Stop Nouride server**, **Start Nouride server** (the owner, 2026-11-28), so
+  stopping Nouride is never mistaken for closing or quitting the app. Its question is "Stop Nouride server?", "Your
+  agents stop answering until you start it again.", Stop and Cancel, in both apps.
+- **Nouride runs only while something shows it** (the owner, 2026-11-28): on the phone the "Nouride is running"
+  notification, on the computer the menu bar's icon. On the computer, opening the app starts Nouride and Quit Nouride
+  stops it with the app (`references/desktop.md`).
 
 ## Words
 

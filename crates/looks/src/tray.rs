@@ -1,5 +1,5 @@
 //! The menu bar's menu, top to bottom: the state in one line, the update notice when one waits, Open Nouride, Start or
-//! Turn off (Nouride the app installed, on this computer), Quit. In the Dev build the state line says Dev first, as its
+//! Stop (Nouride the app installed, on this computer), Quit. In the Dev build the state line says Dev first, as its
 //! icon carries a mark: both builds can sit in the menu bar at once. Nouride Home's own window has no item: Open Nouride
 //! shows it only when there is no dashboard to show (`open_target`), and the dashboard's "Back to Nouride Home" leads
 //! to it.
@@ -27,7 +27,7 @@ pub struct Input<'a> {
   /// `None` before the first question is answered.
   pub place: Option<Where>,
   pub look: &'a Look,
-  /// Nouride on this computer, installed by the app: the only one the app starts and turns off.
+  /// Nouride on this computer, installed by the app: the only one the app starts and stops.
   pub ours: bool,
   pub phase: Phase,
   pub app_update: bool,
@@ -42,8 +42,10 @@ pub const DEV_STATE: &str = "tray_dev_state";
 pub const UPDATES: &str = "updates";
 pub const OPEN: &str = "open";
 pub const START: &str = "start";
-pub const TURN_OFF: &str = "turn_off";
+pub const STOP: &str = "stop";
 pub const QUIT: &str = "quit";
+/// Quit's words, in the menu bar and in the app's menu at the top of the screen.
+pub const QUIT_WORDS: &str = "tray_quit";
 
 /// The window Open Nouride shows. The same answer for every way the app is opened: the menu bar, the Dock, opening
 /// the app again, the app's start.
@@ -82,12 +84,12 @@ pub fn menu(input: Input) -> Vec<Item> {
   out.push(item(OPEN, "tray_open", true));
   if input.place == Some(Where::Here) && input.ours {
     if status::can_turn_off(input.phase) {
-      out.push(item(TURN_OFF, "tray_turn_off", true));
+      out.push(item(STOP, "tray_stop", true));
     } else if matches!(input.phase, Phase::Stopped | Phase::Failed) {
       out.push(item(START, "tray_start", true));
     }
   }
-  out.push(item(QUIT, "tray_quit", true));
+  out.push(item(QUIT, QUIT_WORDS, true));
   out
 }
 
@@ -120,10 +122,10 @@ mod tests {
   }
 
   #[test]
-  fn running_here_offers_open_and_turn_off_with_the_state_first_and_quit_last() {
+  fn running_here_offers_open_and_stop_with_the_state_first_and_quit_last() {
     let look = status::of(Phase::Running, true);
     let items = menu(input(Some(Where::Here), &look, true, Phase::Running));
-    assert_eq!(ids(&items), [STATE, OPEN, TURN_OFF, QUIT]);
+    assert_eq!(ids(&items), [STATE, OPEN, STOP, QUIT]);
     assert_eq!(items[0], item(STATE, "running_title", false));
   }
 

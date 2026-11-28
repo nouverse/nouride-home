@@ -11,7 +11,7 @@ use tauri_plugin_clipboard_manager::ClipboardExt;
 use crate::applog;
 use crate::poller;
 use crate::state::{App, Appearance, Snapshot};
-use crate::{setup, versions, windows};
+use crate::{questions, setup, versions, windows};
 
 type AppState<'a> = State<'a, Arc<App>>;
 
@@ -138,6 +138,57 @@ pub fn turn_off_now(handle: &AppHandle, app: &Arc<App>) {
   poller::tick(handle, app, &mut 0);
 }
 
+/// Whether launchd has Nouride's job now.
+fn loaded(app: &App) -> bool {
+  service::Supervisor::job(&app.agent).unwrap_or_default().loaded
+}
+
+/// The menu bar's Stop Nouride server: asked first, then Nouride stops at once and the app stays.
+pub fn stop_asked(handle: &AppHandle, app: &Arc<App>) {
+  if !app.ours() {
+    return;
+  }
+  let (h, a) = (handle.clone(), app.clone());
+  questions::ask(handle, looks::ask::STOP, move |yes| {
+    applog::write(&a.layout.app_log(), if yes { "stop: asked, stop" } else { "stop: asked, cancel" });
+    if yes {
+      std::thread::spawn(move || turn_off_now(&h, &a));
+    }
+  });
+}
+
+/// Quit Nouride, in the menu bar and the app's menu (⌘Q): the app goes, and this computer's Nouride with it. Asked
+/// first only when Nouride runs here (`service::rules::quit_asks`); with Nouride on another computer or stopped, the
+/// app goes at once. Cancel leaves everything as it was.
+pub fn quit_now(handle: &AppHandle, app: &Arc<App>) {
+  if !service::rules::quit_asks(app.now(loaded(app))) {
+    applog::write(&app.layout.app_log(), "quit");
+    return handle.exit(0);
+  }
+  let (h, a) = (handle.clone(), app.clone());
+  questions::ask(handle, looks::ask::QUIT, move |yes| {
+    applog::write(&a.layout.app_log(), if yes { "quit: asked, quit" } else { "quit: asked, cancel" });
+    if yes {
+      std::thread::spawn(move || {
+        turn_off_now(&h, &a);
+        h.exit(0);
+      });
+    }
+  });
+}
+
+/// As the app ends, however it ends: Nouride stops with it (`service::rules::stops_on_exit`), unless the app is only
+/// starting again after its own update.
+pub fn stop_on_exit(app: &App) {
+  if app.restarting.load(std::sync::atomic::Ordering::SeqCst) || !service::rules::stops_on_exit(app.now(loaded(app))) {
+    return;
+  }
+  applog::write(&app.layout.app_log(), "the app ends: Nouride stops");
+  if let Err(e) = service::Supervisor::stop(&app.agent) {
+    applog::write(&app.layout.app_log(), &format!("stop as the app ends: {e}"));
+  }
+}
+
 #[tauri::command]
 pub async fn turn_off(handle: AppHandle, app: AppState<'_>) -> Result<(), ()> {
   let app = app.inner().clone();
@@ -232,6 +283,7 @@ pub fn logs(app: AppState) -> Logs {
     ("Installed by the app", format!("{}", s.ours)),
     ("Already on this computer", format!("{}", s.adopted)),
     ("LaunchAgent", format!("{} at {}", app.build.agent_label, app.agent.path.display())),
+    ("Opens at login", format!("{} ({})", app.login.registered(), app.login.path.display())),
     ("Job", format!("loaded {}, pid {:?}, last exit {:?}", inner.job.loaded, inner.job.pid, inner.job.last_exit)),
     ("Install folder", app.layout.install().display().to_string()),
     ("Open to other devices", format!("{} (network address {:?})", s.open_to_others, inner.lan)),

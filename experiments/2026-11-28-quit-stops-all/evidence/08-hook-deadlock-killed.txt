@@ -1,0 +1,3 @@
+hung Dev app ended
+	state = running
+	pid = 48431

@@ -7,8 +7,8 @@ Nouride Home is two apps in one repository, with one version (`VERSION`):
   foreground service that keeps `nouride start` running; or opens a Nouride on another computer. Kotlin, Gradle, no
   third-party Android libraries.
 - **Desktop** (`apps/desktop`, `crates/`, `packages/ui-kit`, `tech.nouverse.nouride.home`): runs Nouride on this
-  computer with the official installer and keeps it running under launchd, or opens a Nouride on another computer, and
-  shows its dashboard in a window of its own, with a menu bar icon. Tauri v2 (Rust) with a React UI. macOS first;
+  computer with the official installer and runs it under launchd while the app is open (Quit stops both), or opens a
+  Nouride on another computer, and shows its dashboard in a window of its own, with a menu bar icon. Tauri v2 (Rust) with a React UI. macOS first;
   Linux later. It mirrors the Android app in concept, features and words.
 
 This file is for any coding agent working here.

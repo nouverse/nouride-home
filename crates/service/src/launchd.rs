@@ -1,5 +1,8 @@
-//! The app's LaunchAgent: `~/Library/LaunchAgents/<label>.plist`, loaded in the person's GUI session
+//! The app's LaunchAgent for Nouride: `<label>.plist` in the app's own folder, loaded in the person's GUI session
 //! (`gui/<uid>`) with `launchctl bootstrap`, stopped with `bootout`, restarted with `kickstart -k`, read with `print`.
+//! Not in `~/Library/LaunchAgents`, which launchd loads at every login: Nouride runs only while the app is there to
+//! show it, so the app starts it (`crate::login` opens the app at login). Loaded, it keeps `KeepAlive`: a Nouride that
+//! crashes is started again, and one keeps running when the app itself crashes.
 
 use std::fs;
 use std::io;
@@ -13,7 +16,7 @@ pub const NOURIDE_OWN_LABEL: &str = "tech.nouverse.nouride";
 /// What `launchctl print` exits with for a service it does not know.
 const NOT_LOADED: i32 = 113;
 
-fn escape(text: &str) -> String {
+pub(crate) fn escape(text: &str) -> String {
   text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;")
 }
 
@@ -66,6 +69,11 @@ pub fn relabel(plist: &str, label: &str) -> Result<String, String> {
   Ok(out)
 }
 
+/// `~/Library/LaunchAgents`, which launchd loads at every login.
+pub fn launch_agents(home: &Path) -> PathBuf {
+  home.join("Library").join("LaunchAgents")
+}
+
 pub fn domain(uid: u32) -> String {
   format!("gui/{uid}")
 }
@@ -110,19 +118,37 @@ pub struct LaunchAgent<E: Exec> {
   pub label: String,
   /// What the job runs: Nouride's binary and `start`, each one argument whatever spaces are in its path.
   pub program: Vec<String>,
-  /// `~/Library/LaunchAgents/<label>.plist`.
+  /// `<the app's folder>/<label>.plist`.
   pub path: PathBuf,
 }
 
 impl<E: Exec> LaunchAgent<E> {
-  pub fn new(exec: E, uid: u32, label: &str, home: &Path, program: Vec<String>) -> LaunchAgent<E> {
-    LaunchAgent {
-      exec,
-      uid,
-      label: label.to_owned(),
-      program,
-      path: home.join("Library").join("LaunchAgents").join(format!("{label}.plist")),
+  /// The job's plist is kept in `dir`, the app's own folder.
+  pub fn new(exec: E, uid: u32, label: &str, dir: &Path, program: Vec<String>) -> LaunchAgent<E> {
+    LaunchAgent { exec, uid, label: label.to_owned(), program, path: dir.join(format!("{label}.plist")) }
+  }
+
+  /// Moves this job's plist out of `launch_agents` (`~/Library/LaunchAgents`, where up to 0.2.2 the app put it and
+  /// launchd loaded it at every login) into the app's folder; whether there was one to move. The job loaded from it
+  /// keeps running: launchd holds what it read. Only the app's own label is ever looked for: Nouride's
+  /// (`tech.nouverse.nouride`) belongs to a Nouride installed by hand.
+  pub fn move_from(&self, launch_agents: &Path) -> io::Result<bool> {
+    if self.label == NOURIDE_OWN_LABEL {
+      return Err(io::Error::other("the app's LaunchAgent may not take Nouride's own label"));
     }
+    let old = launch_agents.join(format!("{}.plist", self.label));
+    if !old.is_file() {
+      return Ok(false);
+    }
+    if let Some(dir) = self.path.parent() {
+      fs::create_dir_all(dir)?;
+    }
+    if self.path.is_file() {
+      fs::remove_file(&old)?;
+    } else {
+      fs::rename(&old, &self.path)?;
+    }
+    Ok(true)
   }
 
   fn run(&self, argv: Vec<String>) -> io::Result<(i32, String)> {
@@ -281,10 +307,15 @@ mod tests {
     }
   }
 
+  fn scratch(name: &str) -> PathBuf {
+    let dir = std::env::temp_dir().join(format!("service-launchd-{}-{name}", std::process::id()));
+    let _ = fs::remove_dir_all(&dir);
+    dir
+  }
+
   fn agent<'a>(fake: &'a Fake, name: &str) -> LaunchAgent<&'a Fake> {
-    let home = std::env::temp_dir().join(format!("service-launchd-{}-{name}", std::process::id()));
-    let _ = fs::remove_dir_all(&home);
-    LaunchAgent::new(fake, 501, LABEL, &home, vec!["/Users/x/Library/Application Support/a b/nouride".into(), "start".into()])
+    let data = scratch(name).join("Application Support").join("tech.nouverse.nouride.home.dev");
+    LaunchAgent::new(fake, 501, LABEL, &data, vec!["/Users/x/Library/Application Support/a b/nouride".into(), "start".into()])
   }
 
   const SPLIT: &str = r#"<plist><dict><key>Label</key><string>tech.nouverse.nouride</string>
@@ -325,11 +356,12 @@ mod tests {
   }
 
   #[test]
-  fn installing_writes_the_apps_plist_under_its_own_name_and_loads_it() {
+  fn installing_writes_the_apps_plist_under_its_own_name_in_its_own_folder_and_loads_it() {
     let fake = Fake { loaded: RefCell::new(false), calls: RefCell::new(vec![]) };
     let agent = agent(&fake, "install");
     agent.install_and_start(GENERATED).unwrap();
-    assert!(agent.path.ends_with(format!("Library/LaunchAgents/{LABEL}.plist")));
+    assert!(agent.path.ends_with(format!("Application Support/tech.nouverse.nouride.home.dev/{LABEL}.plist")));
+    assert!(!agent.path.to_string_lossy().contains("LaunchAgents"));
     assert!(fs::read_to_string(&agent.path).unwrap().contains(LABEL));
     assert!(agent.job().unwrap().loaded);
     assert_eq!(*fake.calls.borrow(), ["print", "print", "bootstrap", "print"]);
@@ -347,5 +379,41 @@ mod tests {
     fake.calls.borrow_mut().clear();
     agent.restart().unwrap();
     assert_eq!(*fake.calls.borrow(), ["print", "print", "bootstrap"]);
+  }
+
+  #[test]
+  fn an_install_from_before_moves_its_plist_out_of_launch_agents_and_the_running_job_is_left_alone() {
+    let fake = Fake { loaded: RefCell::new(true), calls: RefCell::new(vec![]) };
+    let agent = agent(&fake, "move");
+    let launch_agents = agent.path.parent().unwrap().parent().unwrap().parent().unwrap().join("LaunchAgents");
+    fs::create_dir_all(&launch_agents).unwrap();
+    let old = launch_agents.join(format!("{LABEL}.plist"));
+    fs::write(&old, "the plist of 0.2.2").unwrap();
+    let own = launch_agents.join(format!("{NOURIDE_OWN_LABEL}.plist"));
+    fs::write(&own, "a Nouride installed by hand").unwrap();
+    assert!(agent.move_from(&launch_agents).unwrap());
+    assert!(!old.exists());
+    assert_eq!(fs::read_to_string(&agent.path).unwrap(), "the plist of 0.2.2");
+    assert_eq!(fs::read_to_string(&own).unwrap(), "a Nouride installed by hand");
+    assert!(fake.calls.borrow().is_empty(), "launchctl was asked: {:?}", fake.calls.borrow());
+    assert!(!agent.move_from(&launch_agents).unwrap());
+    // One already in the app's folder wins; the old one goes.
+    fs::write(&old, "older").unwrap();
+    assert!(agent.move_from(&launch_agents).unwrap());
+    assert!(!old.exists());
+    assert_eq!(fs::read_to_string(&agent.path).unwrap(), "the plist of 0.2.2");
+  }
+
+  #[test]
+  fn nouride_s_own_plist_is_never_moved() {
+    let fake = Fake { loaded: RefCell::new(true), calls: RefCell::new(vec![]) };
+    let dir = scratch("own");
+    let launch_agents = dir.join("LaunchAgents");
+    fs::create_dir_all(&launch_agents).unwrap();
+    let own = launch_agents.join(format!("{NOURIDE_OWN_LABEL}.plist"));
+    fs::write(&own, "a Nouride installed by hand").unwrap();
+    let agent = LaunchAgent::new(&fake, 501, NOURIDE_OWN_LABEL, &dir.join("data"), vec![]);
+    assert!(agent.move_from(&launch_agents).is_err());
+    assert!(own.is_file());
   }
 }

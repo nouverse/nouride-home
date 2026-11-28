@@ -370,9 +370,9 @@ class StatusActivity : Activity() {
 
   private fun confirmTurnOff() {
     AlertDialog.Builder(this)
-      .setTitle(R.string.turn_off_title)
-      .setMessage(R.string.turn_off_body)
-      .setPositiveButton(R.string.turn_off) { _, _ -> ServerService.stop(this) }
+      .setTitle(R.string.stop_title)
+      .setMessage(R.string.stop_body)
+      .setPositiveButton(R.string.stop) { _, _ -> ServerService.stop(this) }
       .setNegativeButton(R.string.cancel, null)
       .show()
   }
