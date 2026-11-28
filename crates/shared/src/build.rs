@@ -20,6 +20,8 @@ pub struct Build {
   pub gateway_port: u16,
   /// The app's own LaunchAgent, never the one Nouride's installer names (`tech.nouverse.nouride`).
   pub agent_label: &'static str,
+  /// The app's own LaunchAgent that opens it at login (`service::login`).
+  pub login_label: &'static str,
   /// The app's link scheme.
   pub scheme: &'static str,
   /// Whether this build carries the e2e hooks and is never offered an update.
@@ -33,6 +35,7 @@ impl Build {
     port: 18254,
     gateway_port: DEFAULT_GATEWAY_PORT,
     agent_label: "tech.nouverse.nouride.home.nouride",
+    login_label: "tech.nouverse.nouride.home.login",
     scheme: "nouridehome",
     dev: false,
   };
@@ -43,6 +46,7 @@ impl Build {
     port: 18264,
     gateway_port: 18266,
     agent_label: "tech.nouverse.nouride.home.dev.nouride",
+    login_label: "tech.nouverse.nouride.home.dev.login",
     scheme: "nouridehome-dev",
     dev: true,
   };
@@ -82,6 +86,7 @@ mod tests {
     assert_ne!(r.port, d.port);
     assert_ne!(r.gateway_port, d.gateway_port);
     assert_ne!(r.agent_label, d.agent_label);
+    assert_ne!(r.login_label, d.login_label);
     assert_ne!(r.scheme, d.scheme);
     assert!(d.dev && !r.dev);
   }
@@ -90,6 +95,8 @@ mod tests {
   fn neither_build_names_the_installers_own_launch_agent() {
     for build in [Build::RELEASE, Build::DEV] {
       assert_ne!(build.agent_label, "tech.nouverse.nouride");
+      assert_ne!(build.login_label, "tech.nouverse.nouride");
+      assert_ne!(build.login_label, build.agent_label);
     }
   }
 

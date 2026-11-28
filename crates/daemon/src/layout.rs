@@ -1,5 +1,6 @@
 //! Where the app keeps Nouride and everything it made for it, all under one folder of its own
-//! (`~/Library/Application Support/<bundle id>` on macOS). Nothing of it is outside that folder but the LaunchAgent.
+//! (`~/Library/Application Support/<bundle id>` on macOS), Nouride's LaunchAgent included. Nothing of it is outside that
+//! folder but the plist that opens the app at login (`service::login`).
 
 use std::path::{Path, PathBuf};
 

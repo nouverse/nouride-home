@@ -136,6 +136,7 @@ fn dump(handle: &AppHandle, app: &App) -> serde_json::Value {
     "windows": { "main": window(windows::main::LABEL), "dashboard": window(windows::dashboard::LABEL) },
     "question": question,
     "agent": { "label": app.build.agent_label, "path": app.agent.path, "installed": service::Supervisor::installed(&app.agent) },
+    "login": { "label": app.login.label, "path": app.login.path, "registered": app.login.registered() },
   });
   let _ = fs::create_dir_all(dir(app));
   let _ = fs::write(dir(app).join("state.json"), serde_json::to_string_pretty(&state).unwrap_or_default());

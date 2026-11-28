@@ -45,6 +45,7 @@ pub fn tick(handle: &AppHandle, app: &App, remote_at: &mut u64) {
       versions::maybe_check_notice(app, updates::notice::TWICE_A_DAY_MS);
     }
   }
+  app.sync_login();
   send(handle, app);
 }
 

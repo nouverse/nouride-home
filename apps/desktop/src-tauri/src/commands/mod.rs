@@ -232,6 +232,7 @@ pub fn logs(app: AppState) -> Logs {
     ("Installed by the app", format!("{}", s.ours)),
     ("Already on this computer", format!("{}", s.adopted)),
     ("LaunchAgent", format!("{} at {}", app.build.agent_label, app.agent.path.display())),
+    ("Opens at login", format!("{} ({})", app.login.registered(), app.login.path.display())),
     ("Job", format!("loaded {}, pid {:?}, last exit {:?}", inner.job.loaded, inner.job.pid, inner.job.last_exit)),
     ("Install folder", app.layout.install().display().to_string()),
     ("Open to other devices", format!("{} (network address {:?})", s.open_to_others, inner.lan)),

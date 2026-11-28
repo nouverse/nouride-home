@@ -60,6 +60,13 @@ fn main() {
       let uid = unsafe { libc::getuid() };
       let app = Arc::new(App::new(build, Layout::new(&data), uid, &home));
       applog::write(&app.layout.app_log(), &format!("{} {} started", build.name, env!("CARGO_PKG_VERSION")));
+      // Up to 0.2.2 Nouride's plist was where launchd loads it at every login, without the app: it moves into the
+      // app's folder, and the job loaded from it keeps running.
+      match app.agent.move_from(&service::launchd::launch_agents(&home)) {
+        Ok(true) => applog::write(&app.layout.app_log(), "Nouride's LaunchAgent moved into the app's folder"),
+        Ok(false) => {}
+        Err(e) => applog::write(&app.layout.app_log(), &format!("Nouride's LaunchAgent could not move: {e}")),
+      }
       tauri_app.manage(app.clone());
       windows::apply_appearance(&handle, app.appearance());
       tray::create(&handle, &app)?;

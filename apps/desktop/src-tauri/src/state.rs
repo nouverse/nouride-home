@@ -9,7 +9,9 @@ use daemon::progress::SetupProgress;
 use daemon::Layout;
 use looks::{connect, versions, Look};
 use serde::Serialize;
-use service::launchd::LaunchAgent;
+use service::launchd::{self, LaunchAgent};
+use service::login::LoginItem;
+use service::rules::{self, Now};
 use service::{Job, System};
 use shared::prefs::Prefs;
 use shared::{AppStep, Build, Health, NourideStep, Phase, Reply, Where};
@@ -60,6 +62,7 @@ pub struct App {
   pub build: Build,
   pub layout: Layout,
   pub agent: LaunchAgent<System>,
+  pub login: LoginItem,
   pub inner: Mutex<Inner>,
 }
 
@@ -69,11 +72,13 @@ const APPEARANCE: &str = "appearance";
 impl App {
   pub fn new(build: Build, layout: Layout, uid: u32, home: &std::path::Path) -> App {
     let program = vec![layout.binary().display().to_string(), "start".to_owned()];
-    let agent = LaunchAgent::new(System, uid, build.agent_label, home, program);
+    let agent = LaunchAgent::new(System, uid, build.agent_label, &layout.data, program);
+    let login = LoginItem::new(build.login_label, &launchd::launch_agents(home));
     App {
       build,
       layout,
       agent,
+      login,
       inner: Mutex::new(Inner {
         tracker: Tracker::default(),
         phase: Phase::Stopped,
@@ -91,6 +96,22 @@ impl App {
         app_update: None,
         last_sent: String::new(),
       }),
+    }
+  }
+
+  /// What `service::rules` decide from, with whether Nouride's job is loaded as launchd says it now.
+  pub fn now(&self, loaded: bool) -> Now {
+    Now { place: self.where_(), ours: self.ours(), loaded, installing: self.inner.lock().unwrap().installing }
+  }
+
+  /// The app opens at login while it runs Nouride here, and not otherwise (`service::rules::opens_at_login`).
+  pub fn sync_login(&self) {
+    let Ok(exe) = std::env::current_exe() else { return };
+    let loaded = self.inner.lock().unwrap().job.loaded;
+    match self.login.sync(rules::opens_at_login(self.now(loaded)), &exe) {
+      Ok(true) => crate::applog::write(&self.layout.app_log(), &format!("opens at login: {}", self.login.registered())),
+      Ok(false) => {}
+      Err(e) => crate::applog::write(&self.layout.app_log(), &format!("opens at login: {e}")),
     }
   }
 
