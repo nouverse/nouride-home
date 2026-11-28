@@ -1,6 +1,10 @@
 //! How long the app's windows live. Each lives while it is open: closing it destroys it, and its WebKit processes
 //! with it, while the app stays in the menu bar; whatever shows it again makes it again.
 
+/// The words of Settings… in the app's menu at the top of the screen, one of the two ways to Nouride Home's window that
+/// need nothing from the dashboard's page (the other is the app's name in the Window menu).
+pub const MENU_SETTINGS: &str = "menu_settings";
+
 /// The page the app's window is made at: Home, or the section the menu bar asked for (`index.html#/versions`). A new
 /// window's screens read it on their first draw: the `screen` event that moves an open window would be sent before
 /// they listen, and lost.

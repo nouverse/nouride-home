@@ -2,6 +2,7 @@
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod app_menu;
 mod applog;
 mod commands;
 #[cfg(feature = "dev")]
@@ -43,6 +44,8 @@ fn main() {
     .plugin(tauri_plugin_updater::Builder::new().build())
     .plugin(tauri_plugin_deep_link::init())
     .plugin(tauri_plugin_dialog::init())
+    .menu(move |handle| app_menu::build(handle, build.name))
+    .on_menu_event(|handle, event| app_menu::press(handle, event.id().as_ref()))
     .setup(move |tauri_app| {
       let handle = tauri_app.handle().clone();
       // The bundle id the config gave this app must be the build's: a release config with the Dev feature (or the

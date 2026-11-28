@@ -189,6 +189,13 @@ The Dev build's icon carries a dot in its lower right corner, cut out of the hea
 `scripts/make-icons.py`), and its state line starts with "Dev · ", so it is told from the release app beside it. The
 release build's icon and menu do not change.
 
+## The menus at the top of the screen
+
+Tauri's own menus stay (the app's, File, Edit with copy and paste for the dashboard, View, Window, Help), with two ways
+to Nouride Home's window that need nothing from the dashboard's page, so a page that breaks never leaves the person
+without one (`apps/desktop/src-tauri/src/app_menu.rs`): Settings… (⌘,) under About in the app's menu opens Settings,
+and the app's name at the end of the Window menu opens Home.
+
 ## The dashboard's window
 
 Opened by Open Nouride (in the menu bar or on Home): the dashboard, signed in, at 1200 × 800, titled "Nouride". Links outside Nouride open in the

@@ -49,6 +49,9 @@ pub fn handle(handle: &AppHandle, app: &Arc<App>, argv: &[String]) {
         }
       }
       "tray" => tray::press(&h, &a, &arg),
+      // The menus along the top of the screen: what they hold, and with an item's id, a press on it.
+      "menu" if arg.is_empty() => return Ok(menus(&h)),
+      "menu" => crate::app_menu::press(&h, &arg),
       // Runs a script in the dashboard's window, as a click there would (WKWebView has no WebDriver).
       "dashboard-js" => {
         let w = h.get_webview_window(windows::dashboard::LABEL).ok_or("the dashboard's window is not open")?;
@@ -91,6 +94,21 @@ pub fn handle(handle: &AppHandle, app: &Arc<App>, argv: &[String]) {
     Err(e) => json!({ "action": action, "ok": false, "error": e }),
   };
   let _ = fs::write(out.join("last.json"), serde_json::to_string_pretty(&answer).unwrap_or_default());
+}
+
+/// Each menu along the top of the screen, with its items' ids and words.
+fn menus(handle: &AppHandle) -> serde_json::Value {
+  use tauri::menu::MenuItemKind;
+  fn item(kind: &MenuItemKind<tauri::Wry>) -> serde_json::Value {
+    match kind {
+      MenuItemKind::Submenu(s) => json!({ "menu": s.text().unwrap_or_default(), "items": s.items().unwrap_or_default().iter().map(item).collect::<Vec<_>>() }),
+      MenuItemKind::MenuItem(i) => json!({ "id": i.id().0, "words": i.text().unwrap_or_default() }),
+      MenuItemKind::Predefined(p) => json!(p.text().unwrap_or_default()),
+      MenuItemKind::Check(c) => json!(c.text().unwrap_or_default()),
+      MenuItemKind::Icon(i) => json!(i.text().unwrap_or_default()),
+    }
+  }
+  handle.menu().map(|m| json!(m.items().unwrap_or_default().iter().map(item).collect::<Vec<_>>())).unwrap_or_default()
 }
 
 /// The app's state as JSON: the snapshot, the menu bar's items, and the windows.

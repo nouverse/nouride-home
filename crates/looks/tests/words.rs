@@ -1,7 +1,7 @@
 //! Every key the looks name has its words in `packages/ui-kit/src/words.json`, and every placeholder in them is one
 //! the screens fill: a state cannot ship without its sentence, nor a sentence with a `{…}` left in it.
 
-use looks::{leave, notices, tray, versions, Words};
+use looks::{leave, notices, tray, versions, window, Words};
 use serde_json::Value;
 use shared::{Phase, Reply, Where};
 
@@ -74,6 +74,11 @@ fn the_question_before_the_dashboard_closes_has_its_words_and_its_two_answers() 
   }
   assert_ne!(map[leave::GO_BACK], map[leave::STAY]);
   assert!(map[leave::TITLE].as_str().unwrap().ends_with('?'));
+}
+
+#[test]
+fn the_app_menus_settings_has_its_words() {
+  has(&words(), window::MENU_SETTINGS);
 }
 
 #[test]
